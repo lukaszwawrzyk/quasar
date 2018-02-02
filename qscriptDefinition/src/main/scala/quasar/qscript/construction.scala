@@ -20,8 +20,8 @@ import slamdata.Predef._
 import quasar.common.{JoinType, SortDir}
 import quasar.{ejson, qscript}
 import quasar.ejson.EJson
-import quasar.qscript.qsu.{Access, QAccess}
-import quasar.qscript.qsu.QScriptUniform.ShiftTarget
+//import quasar.qscript.qsu.{Access, QAccess}
+//import quasar.qscript.qsu.QScriptUniform.ShiftTarget
 import quasar.std.TemporalPart
 
 import matryoshka._
@@ -207,14 +207,14 @@ object construction {
     def Guard[A](a1: FreeMapA[T, A], tpe: quasar.Type, a2: FreeMapA[T, A], a3: FreeMapA[T, A]): FreeMapA[T, A] =
       rollCore(MapFuncsCore.Guard(a1, tpe, a2, a3))
     def Hole: FreeMap[T] = Free.pure(SrcHole)
-    def AccessHole: FreeMapA[T, QAccess[T, Hole]] =
-      Free.pure(Access.valueHole(SrcHole))
-    def LeftTarget: FreeMapA[T, ShiftTarget[T]] =
-      Free.pure(ShiftTarget.LeftTarget[T]())
-    def RightTarget: FreeMapA[T, ShiftTarget[T]] =
-      Free.pure(ShiftTarget.RightTarget[T]())
-    def AccessLeftTarget(f: Hole => QAccess[T, Hole]): FreeMapA[T, ShiftTarget[T]] =
-      Free.pure(ShiftTarget.AccessLeftTarget(f(SrcHole)))
+//    def AccessHole: FreeMapA[T, QAccess[T, Hole]] =
+//      Free.pure(Access.valueHole(SrcHole))
+//    def LeftTarget: FreeMapA[T, ShiftTarget[T]] =
+//      Free.pure(ShiftTarget.LeftTarget[T]())
+//    def RightTarget: FreeMapA[T, ShiftTarget[T]] =
+//      Free.pure(ShiftTarget.RightTarget[T]())
+//    def AccessLeftTarget(f: Hole => QAccess[T, Hole]): FreeMapA[T, ShiftTarget[T]] =
+//      Free.pure(ShiftTarget.AccessLeftTarget(f(SrcHole)))
 
     def LeftSide: JoinFunc[T] = Free.pure(qscript.LeftSide)
     def RightSide: JoinFunc[T] = Free.pure(qscript.RightSide)
