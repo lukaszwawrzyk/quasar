@@ -269,7 +269,7 @@ lazy val root = project.in(file("."))
 //  |         / | \  /          /             _______________/         /
 //  |        /  |  \/__________/______       /            ____________/
 //  |       /   |  /    \     /        \    /            /
-  marklogicIt, mongoIt, couchbaseIt, /*sparkcoreIt,*/ rdbmsIt
+  marklogicIt, mongoIt, couchbaseIt, /*sparkcoreIt,*/ rdbmsIt, qscriptDefinition
 //
 // NB: the *It projects are temporary until we polyrepo
   ).enablePlugins(AutomateHeaderPlugin)
@@ -395,16 +395,28 @@ lazy val sql = project
   .enablePlugins(AutomateHeaderPlugin)
 
 // connectors
+lazy val qscriptDefinition =
+  project
+    .settings(name := "quasar-qscript-definition-internal")
+    .dependsOn(
+      common   % BothScopes,
+      effect   % BothScopes,
+      frontend % BothScopes,
+      sql      % "test->test")
+    .settings(commonSettings)
+    .settings(publishTestsSettings)
+    .settings(targetSettings)
+    .settings(
+      ScoverageKeys.coverageMinimum := 79,
+      ScoverageKeys.coverageFailOnMinimum := true)
+    .settings(excludeTypelevelScalaLibrary)
+    .enablePlugins(AutomateHeaderPlugin)
 
 /** Types and operations needed by connector implementations.
   */
 lazy val connector = project
   .settings(name := "quasar-connector-internal")
-  .dependsOn(
-    common   % BothScopes,
-    effect   % BothScopes,
-    frontend % BothScopes,
-    sql      % "test->test")
+  .dependsOn(qscriptDefinition)
   .settings(commonSettings)
   .settings(publishTestsSettings)
   .settings(targetSettings)
