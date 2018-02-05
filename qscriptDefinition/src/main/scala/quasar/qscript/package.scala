@@ -107,9 +107,52 @@ package object qscript {
   type QScriptEducated[T[_[_]], A] =
     (QScriptCore[T, ?] :\: ThetaJoin[T, ?] :\: Const[Read[ADir], ?] :/: Const[Read[AFile], ?])#M[A]
 
-  def educatedToTotal[T[_[_]]]
-      : Injectable.Aux[QScriptEducated[T, ?], QScriptTotal[T, ?]] =
-    ::\::[QScriptCore[T, ?]](::\::[ThetaJoin[T, ?]](::/::[T, Const[Read[ADir], ?], Const[Read[AFile], ?]]))
+  type MyQScriptEducated[T[_[_]], A] =
+    CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[Read[ADir], ?] ::: Const[Read[AFile], ?] ::: TNilK, A]
+
+  def myEducatedToTotal[T[_[_]]](
+    sub: MyQScriptEducated[T, ?],
+    list: MyQScriptTotal[T, ?]
+  ) : CopK.Inject[MyQScriptEducated[T, ?], MyQScriptTotal[T, ?]] = {
+
+    /*
+    *
+  Given wrapped Injection of F into H and G into H create injection of F v G into H
+  I will want: given (wrapped?) CopK.Inject[F, H] and CopK.Inject[G, H]
+  Create CopK.Inject[F ::: G ::: TNilK, H]
+  Where H <: CopK[_, _]
+  Likely I will need a step that converts CopK.Inject[F, H] into CopK.Inject[F ::: TNilK, H]
+  And also a final step that converts our eventual CopK.Inject[A ::: B ::: C ::: D ::: TNilK, H] into
+  CopK.Inject[CopK[A ::: B ::: C ::: D ::: TNilK, ?], H] or something like that
+  def coproduct[F[_], G[_], H[_]](implicit F: Aux[F, H], G: Aux[G, H]): Aux[Coproduct[F, G, ?], H] = make(
+    λ[Coproduct[F, G, ?] ~> H](_.run.fold(F.inject, G.inject)),
+    λ[H ~> λ[A => Option[Coproduct[F, G, A]]]](out =>
+      F.project(out).cata(
+        f => Coproduct(f.left).some,
+        G.project(out) ∘ (g => Coproduct(g.right))
+      )
+    )
+  )
+    *
+    * */
+
+    sub.index
+    CopK.Inject[QScriptCore[T, ?], MyQScriptTotal[T, ?]](
+      CopK.Inject.injectFromInjectL[QScriptCore[T, ?], MyQScriptTotal[T, ?]#L](
+        CopK.InjectL.makeInjectL[QScriptCore[T, ?], MyQScriptTotal[T, ?]#L](
+          TListK.Pos.materializePos[MyQScriptTotal[T, ?]#L, QScriptCore[T, ?]]
+        )
+      )
+    )
+    CopK.Inject[MyQScriptEducated[T, ?], MyQScriptTotal[T, ?]] // doesn't work unluckily
+  }
+
+  def educatedToTotal[T[_[_]]] : Injectable.Aux[QScriptEducated[T, ?], QScriptTotal[T, ?]] =
+    ::\::[QScriptCore[T, ?]](
+      ::\::[ThetaJoin[T, ?]](
+        ::/::[T, Const[Read[ADir], ?], Const[Read[AFile], ?]]
+      )
+    )
 
   object QCE {
     def apply[T[_[_]], A](qc: QScriptCore[T, A]): QScriptEducated[T, A] =
