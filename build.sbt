@@ -403,6 +403,7 @@ lazy val qscriptDefinition =
       effect   % BothScopes,
       frontend % BothScopes,
       sql      % "test->test")
+    .settings(libraryDependencies ++= Dependencies.qscript)
     .settings(commonSettings)
     .settings(publishTestsSettings)
     .settings(targetSettings)

@@ -98,6 +98,10 @@ object Dependencies {
     "org.tpolecat"               %% "doobie-specs2"             % doobieVersion % Test
   )
 
+  def qscript = Seq(
+    "io.frees" %% "iotaz-core" % "0.3.4"
+  )
+
   def interface = Seq(
     "com.github.scopt" %% "scopt" % scoptVersion,
     "org.jboss.aesh"    % "aesh"  % "0.66.17"
