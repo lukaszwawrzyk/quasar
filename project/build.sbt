@@ -1,3 +1,5 @@
+resolvers += "Jenkins" at "http://repo.jenkins-ci.org/releases"
+
 libraryDependencies += "org.kohsuke" % "github-api" % "1.59" exclude("org.jenkins-ci", "annotation-indexer")
 
 disablePlugins(TravisCiPlugin)
