@@ -28,7 +28,6 @@ import matryoshka.patterns._
 import scalaz._, Scalaz._
 
 import iotaz._
-import TList.::
 import TListK.:::
 
 /** The various representations of an arbitrary query, as seen by the filesystem
@@ -73,6 +72,27 @@ package object qscript {
   type QScriptTotal4[T[_[_]], A] = Coproduct[Const[ShiftedRead[AFile], ?], QScriptTotal5[T, ?], A]
   type QScriptTotal5[T[_[_]], A] = Coproduct[Const[Read[ADir], ?]        , QScriptTotal6[T, ?], A]
   type QScriptTotal6[T[_[_]], A] = Coproduct[Const[Read[AFile], ?]       , Const[DeadEnd, ?]  , A]
+
+  private type MyQScriptTotal[T[_[_]], A] = CopK[
+         QScriptCore[T, ?]
+     ::: ProjectBucket[T, ?]
+     ::: ThetaJoin[T, ?]
+     ::: EquiJoin[T, ?]
+     ::: Const[ShiftedRead[ADir], ?]
+     ::: Const[ShiftedRead[AFile], ?]
+     ::: Const[Read[ADir], ?]
+     ::: Const[Read[AFile], ?]
+     ::: Const[DeadEnd, ?]
+     ::: TNilK, A]
+
+
+  object MyQCT {
+    def apply[T[_[_]], A](qc: QScriptCore[T, A]): MyQScriptTotal[T, A] =
+      CopK.Inject[QScriptCore[T, ?], MyQScriptTotal[T, ?]].inj(qc)
+
+    def unapply[T[_[_]], A](qt: MyQScriptTotal[T, A]): Option[QScriptCore[T, A]] =
+      CopK.Inject[QScriptCore[T, ?], MyQScriptTotal[T, ?]].prj(qt)
+  }
 
   object QCT {
     def apply[T[_[_]], A](qc: QScriptCore[T, A]): QScriptTotal[T, A] =
