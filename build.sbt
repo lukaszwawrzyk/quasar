@@ -433,6 +433,7 @@ lazy val core = project
   .settings(commonSettings)
   .settings(publishTestsSettings)
   .settings(targetSettings)
+  .settings(libraryDependencies ++= Dependencies.qscript)
   .settings(
     libraryDependencies ++= Dependencies.core)
   .settings(excludeTypelevelScalaLibrary)

@@ -27,6 +27,10 @@ import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
 
+import iotaz._
+import TList.::
+import TListK.:::
+
 /** The various representations of an arbitrary query, as seen by the filesystem
   * connectors, along with the operations for dealing with them.
   *
