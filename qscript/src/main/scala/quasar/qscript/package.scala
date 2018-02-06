@@ -19,11 +19,11 @@ package quasar
 import slamdata.Predef._
 import quasar.contrib.pathy.{ADir, AFile}
 import quasar.fp._
-import quasar.qscript.MapFuncCore._
+//import quasar.qscript.MapFuncCore._
 
-import matryoshka._
-import matryoshka.data._
-import matryoshka.implicits._
+//import matryoshka.{Hole => _, _}
+//import matryoshka.data._
+//import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
 
@@ -86,20 +86,20 @@ package object qscript {
      ::: TNilK, A]
 
 
-  object MyQCT {
-    def apply[T[_[_]], A](qc: QScriptCore[T, A]): MyQScriptTotal[T, A] =
-      CopK.Inject[QScriptCore[T, ?], MyQScriptTotal[T, ?]].inj(qc)
-
-    def unapply[T[_[_]], A](qt: MyQScriptTotal[T, A]): Option[QScriptCore[T, A]] =
-      CopK.Inject[QScriptCore[T, ?], MyQScriptTotal[T, ?]].prj(qt)
-  }
-
   object QCT {
     def apply[T[_[_]], A](qc: QScriptCore[T, A]): QScriptTotal[T, A] =
       Inject[QScriptCore[T, ?], QScriptTotal[T, ?]].inj(qc)
 
     def unapply[T[_[_]], A](qt: QScriptTotal[T, A]): Option[QScriptCore[T, A]] =
       Inject[QScriptCore[T, ?], QScriptTotal[T, ?]].prj(qt)
+  }
+
+  object MyQCT {
+    def apply[T[_[_]], A](qc: QScriptCore[T, A]): MyQScriptTotal[T, A] =
+      CopK.Inject[QScriptCore[T, ?], MyQScriptTotal[T, ?]].inj(qc)
+
+    def unapply[T[_[_]], A](qt: MyQScriptTotal[T, A]): Option[QScriptCore[T, A]] =
+      CopK.Inject[QScriptCore[T, ?], MyQScriptTotal[T, ?]].prj(qt)
   }
 
   /** Initial QScript. */
@@ -110,49 +110,16 @@ package object qscript {
   type MyQScriptEducated[T[_[_]], A] =
     CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[Read[ADir], ?] ::: Const[Read[AFile], ?] ::: TNilK, A]
 
-  def myEducatedToTotal[T[_[_]]](
-    sub: MyQScriptEducated[T, ?],
-    list: MyQScriptTotal[T, ?]
-  ) : CopK.Inject[MyQScriptEducated[T, ?], MyQScriptTotal[T, ?]] = {
-
-    /*
-    *
-  Given wrapped Injection of F into H and G into H create injection of F v G into H
-  I will want: given (wrapped?) CopK.Inject[F, H] and CopK.Inject[G, H]
-  Create CopK.Inject[F ::: G ::: TNilK, H]
-  Where H <: CopK[_, _]
-  Likely I will need a step that converts CopK.Inject[F, H] into CopK.Inject[F ::: TNilK, H]
-  And also a final step that converts our eventual CopK.Inject[A ::: B ::: C ::: D ::: TNilK, H] into
-  CopK.Inject[CopK[A ::: B ::: C ::: D ::: TNilK, ?], H] or something like that
-  def coproduct[F[_], G[_], H[_]](implicit F: Aux[F, H], G: Aux[G, H]): Aux[Coproduct[F, G, ?], H] = make(
-    λ[Coproduct[F, G, ?] ~> H](_.run.fold(F.inject, G.inject)),
-    λ[H ~> λ[A => Option[Coproduct[F, G, A]]]](out =>
-      F.project(out).cata(
-        f => Coproduct(f.left).some,
-        G.project(out) ∘ (g => Coproduct(g.right))
-      )
-    )
-  )
-    *
-    * */
-
-    sub.index
-    CopK.Inject[QScriptCore[T, ?], MyQScriptTotal[T, ?]](
-      CopK.Inject.injectFromInjectL[QScriptCore[T, ?], MyQScriptTotal[T, ?]#L](
-        CopK.InjectL.makeInjectL[QScriptCore[T, ?], MyQScriptTotal[T, ?]#L](
-          TListK.Pos.materializePos[MyQScriptTotal[T, ?]#L, QScriptCore[T, ?]]
-        )
-      )
-    )
-    CopK.Inject[MyQScriptEducated[T, ?], MyQScriptTotal[T, ?]] // doesn't work unluckily
-  }
-
+/*
+Temporarly commented until figured out if it is needed
   def educatedToTotal[T[_[_]]] : Injectable.Aux[QScriptEducated[T, ?], QScriptTotal[T, ?]] =
     ::\::[QScriptCore[T, ?]](
       ::\::[ThetaJoin[T, ?]](
         ::/::[T, Const[Read[ADir], ?], Const[Read[AFile], ?]]
       )
     )
+*/
+
 
   object QCE {
     def apply[T[_[_]], A](qc: QScriptCore[T, A]): QScriptEducated[T, A] =
@@ -162,13 +129,26 @@ package object qscript {
       Inject[QScriptCore[T, ?], QScriptEducated[T, ?]].prj(qt)
   }
 
+  object MyQCE {
+    def apply[T[_[_]], A](qc: QScriptCore[T, A]): MyQScriptEducated[T, A] =
+      CopK.Inject[QScriptCore[T, ?], MyQScriptEducated[T, ?]].inj(qc)
+
+    def unapply[T[_[_]], A](qt: MyQScriptEducated[T, A]): Option[QScriptCore[T, A]] =
+      CopK.Inject[QScriptCore[T, ?], MyQScriptEducated[T, ?]].prj(qt)
+  }
+
   /** QScript that has not gone through Read conversion. */
   type QScript[T[_[_]], A] =
     (QScriptCore[T, ?] :\: ThetaJoin[T, ?] :/: Const[DeadEnd, ?])#M[A]
 
+  type MyQScript[T[_[_]], A] =
+    CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[DeadEnd, ?] ::: TNilK, A]
+
+  /*
   implicit def qScriptToQscriptTotal[T[_[_]]]
       : Injectable.Aux[QScript[T, ?], QScriptTotal[T, ?]] =
     ::\::[QScriptCore[T, ?]](::/::[T, ThetaJoin[T, ?], Const[DeadEnd, ?]])
+*/
 
   /** QScript that has gone through Read conversion.
     *
@@ -177,8 +157,13 @@ package object qscript {
   type QScriptRead[T[_[_]], A] =
     (QScriptCore[T, ?] :\: ThetaJoin[T, ?] :\: Const[Read[ADir], ?] :/: Const[Read[AFile], ?])#M[A]
 
+  type MyQScriptRead[T[_[_]], A] =
+    CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[Read[ADir], ?] ::: Const[Read[AFile], ?] ::: TNilK, A]
+
+  /*
   implicit def qScriptReadToQscriptTotal[T[_[_]]]: Injectable.Aux[QScriptRead[T, ?], QScriptTotal[T, ?]] =
     ::\::[QScriptCore[T, ?]](::\::[ThetaJoin[T, ?]](::/::[T, Const[Read[ADir], ?], Const[Read[AFile], ?]]))
+*/
 
   /** QScript that has gone through Read conversion and shifted conversion.
     *
@@ -187,10 +172,16 @@ package object qscript {
   type QScriptShiftRead[T[_[_]], A] =
     (QScriptCore[T, ?] :\: ThetaJoin[T, ?] :\: Const[ShiftedRead[ADir], ?] :/: Const[ShiftedRead[AFile], ?])#M[A]
 
+  type MyQScriptShiftRead[T[_[_]], A] =
+    CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[ShiftedRead[ADir], ?] ::: Const[ShiftedRead[AFile], ?] ::: TNilK, A]
+
+  /*
   implicit def qScriptShiftReadToQScriptTotal[T[_[_]]]: Injectable.Aux[QScriptShiftRead[T, ?], QScriptTotal[T, ?]] =
     ::\::[QScriptCore[T, ?]](::\::[ThetaJoin[T, ?]](::/::[T, Const[ShiftedRead[ADir], ?], Const[ShiftedRead[AFile], ?]]))
+*/
 
   type MapFunc[T[_[_]], A] = (MapFuncCore[T, ?] :/: MapFuncDerived[T, ?])#M[A]
+  type MyMapFunc[T[_[_]], A] = CopK[MapFuncCore[T, ?] ::: MapFuncDerived[T, ?] ::: TNilK, A]
 
   object MFC {
     def apply[T[_[_]], A](mfc: MapFuncCore[T, A]): MapFunc[T, A] =
@@ -198,6 +189,14 @@ package object qscript {
 
     def unapply[T[_[_]], A](mf: MapFunc[T, A]): Option[MapFuncCore[T, A]] =
       Inject[MapFuncCore[T, ?], MapFunc[T, ?]].prj(mf)
+  }
+
+  object MyMFC {
+    def apply[T[_[_]], A](mfc: MapFuncCore[T, A]): MyMapFunc[T, A] =
+      CopK.Inject[MapFuncCore[T, ?], MyMapFunc[T, ?]].inj(mfc)
+
+    def unapply[T[_[_]], A](mf: MyMapFunc[T, A]): Option[MapFuncCore[T, A]] =
+      CopK.Inject[MapFuncCore[T, ?], MyMapFunc[T, ?]].prj(mf)
   }
 
   object MFD {
@@ -216,16 +215,46 @@ package object qscript {
   type FreeMap[T[_[_]]]     = FreeMapA[T, Hole]
   type JoinFunc[T[_[_]]]    = FreeMapA[T, JoinSide]
 
-  type CoEnvQS[T[_[_]], A]      = CoEnv[Hole, QScriptTotal[T, ?], A]
-  type CoEnvMapA[T[_[_]], A, B] = CoEnv[A, MapFunc[T, ?], B]
-  type CoEnvMap[T[_[_]], A]     = CoEnvMapA[T, Hole, A]
+  object MyMFD {
+    def apply[T[_[_]], A](mfc: MapFuncDerived[T, A]): MyMapFunc[T, A] =
+      CopK.Inject[MapFuncDerived[T, ?], MyMapFunc[T, ?]].inj(mfc)
 
-  object ExtractFunc {
-    def unapply[T[_[_]], A](fma: FreeMapA[T, A]): Option[MapFuncCore[T, FreeMapA[T, A]]] = fma match {
-      case Embed(CoEnv(\/-(MFC(func)))) => Some(func)
-      case _ => None
+    def unapply[T[_[_]], A](mf: MyMapFunc[T, A]): Option[MapFuncDerived[T, A]] =
+      CopK.Inject[MapFuncDerived[T, ?], MyMapFunc[T, ?]].prj(mf)
+  }
+
+  type FreeQS[T[_[_]]]        = Free[QScriptTotal[T, ?], Hole]
+  type MyFreeQS[T[_[_]]]      = Free[MyQScriptTotal[T, ?], Hole]
+  type FreeMapA[T[_[_]], A]   = Free[MapFunc[T, ?], A]
+  type MyFreeMapA[T[_[_]], A] = Free[MyMapFunc[T, ?], A]
+  type FreeMap[T[_[_]]]       = FreeMapA[T, Hole]
+  type MyFreeMap[T[_[_]]]     = MyFreeMapA[T, Hole]
+  type JoinFunc[T[_[_]]]      = FreeMapA[T, JoinSide]
+  type MyJoinFunc[T[_[_]]]    = MyFreeMapA[T, JoinSide]
+
+  type CoEnvQS[T[_[_]], A]        = CoEnv[Hole, QScriptTotal[T, ?], A]
+  type MyCoEnvQS[T[_[_]], A]      = CoEnv[Hole, MyQScriptTotal[T, ?], A]
+  type CoEnvMapA[T[_[_]], A, B]   = CoEnv[A, MapFunc[T, ?], B]
+  type MyCoEnvMapA[T[_[_]], A, B] = CoEnv[A, MyMapFunc[T, ?], B]
+  type CoEnvMap[T[_[_]], A]       = CoEnvMapA[T, Hole, A]
+  type MyCoEnvMap[T[_[_]], A]     = MyCoEnvMapA[T, Hole, A]
+
+  /*object ExtractFunc {
+    def unapply[T[_[_]], A](fma: FreeMapA[T, A]): Option[MapFuncCore[T, FreeMapA[T, A]]] = {
+      /* Likely we will need Traverse instances for CopK :///
+      TListK.Op#Map ??
+      Embed.unapply(fma)(
+        freeRecursive(Coproduct.coproductTraverse(MapFuncCore.traverse[T], MapFuncDerived.traverse[T])),
+        CoEnv.traverse(Coproduct.coproductTraverse(MapFuncCore.traverse[T], MapFuncDerived.traverse[T]))
+      )
+      */
+      fma match {
+        case Embed(CoEnv(\/-(MFC(func)))) => Some(func)
+        case _ => None
+      }
     }
   }
+*/
 
   object ExtractFuncDerived {
     def unapply[T[_[_]], A](fma: FreeMapA[T, A]): Option[MapFuncDerived[T, FreeMapA[T, A]]] = fma match {
@@ -235,19 +264,21 @@ package object qscript {
   }
 
   def HoleF[T[_[_]]]: FreeMap[T] = Free.point[MapFunc[T, ?], Hole](SrcHole)
+  def MyHoleF[T[_[_]]]: MyFreeMap[T] = Free.point[MyMapFunc[T, ?], Hole](SrcHole)
   def HoleR[T[_[_]]]: RecFreeMap[T] = Free.point[RecFreeS[MapFunc[T, ?], ?], Hole](SrcHole)
   def HoleQS[T[_[_]]]: FreeQS[T] = Free.point[QScriptTotal[T, ?], Hole](SrcHole)
+  def MyHoleQS[T[_[_]]]: MyFreeQS[T] = Free.point[MyQScriptTotal[T, ?], Hole](SrcHole)
 
-  def LeftSideF[T[_[_]]]: JoinFunc[T] =
-    Free.point[MapFunc[T, ?], JoinSide](LeftSide)
-  def RightSideF[T[_[_]]]: JoinFunc[T] =
-    Free.point[MapFunc[T, ?], JoinSide](RightSide)
-  def ReduceIndexF[T[_[_]]](i: Int \/ Int): FreeMapA[T, ReduceIndex] =
-    Free.point[MapFunc[T, ?], ReduceIndex](ReduceIndex(i))
+  def LeftSideF[T[_[_]]]: JoinFunc[T] = Free.point[MapFunc[T, ?], JoinSide](LeftSide)
+  def MyLeftSideF[T[_[_]]]: MyJoinFunc[T] = Free.point[MyMapFunc[T, ?], JoinSide](LeftSide)
+  def RightSideF[T[_[_]]]: JoinFunc[T] = Free.point[MapFunc[T, ?], JoinSide](RightSide)
+  def MyRightSideF[T[_[_]]]: MyJoinFunc[T] = Free.point[MyMapFunc[T, ?], JoinSide](RightSide)
+  def ReduceIndexF[T[_[_]]](i: Int \/ Int): FreeMapA[T, ReduceIndex] = Free.point[MapFunc[T, ?], ReduceIndex](ReduceIndex(i))
+  def MyReduceIndexF[T[_[_]]](i: Int \/ Int): MyFreeMapA[T, ReduceIndex] = Free.point[MyMapFunc[T, ?], ReduceIndex](ReduceIndex(i))
 
   def rebase[M[_]: Bind, A](in: M[A], key: M[A]): M[A] = in >> key
 
-  def rebaseT[T[_[_]]: BirecursiveT, F[_]: Traverse](
+  /*def rebaseT[T[_[_]]: BirecursiveT, F[_]: Traverse](
     target: FreeQS[T])(
     src: T[F])(
     implicit FI: Injectable.Aux[F, QScriptTotal[T, ?]]):
@@ -263,16 +294,18 @@ package object qscript {
     //       target.transAnaM(_.htraverse(FI project _)) ∘ (_ >> srcCo)
     target.cataM[Option, T[CoEnv[Hole, F, ?]]](
       CoEnv.htraverse(λ[QScriptTotal[T, ?] ~> (Option ∘ F)#λ](FI.project(_))).apply(_) ∘ (_.embed)) ∘
-      (targ => (targ.convertTo[Free[F, Hole]] >> srcCo.convertTo[Free[F, Hole]]).convertTo[T[CoEnv[Hole, F, ?]]])
+      (targ => (targ.convertTo[Free[F, Hole]] >> srcCo.convertTo[Free[F, Hole]]).convertTo[T[CoEnv[Hole, F, ?]]])*/
 
   /** A variant of `repeatedly` that works with `Inject` instances. */
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-  def injectRepeatedly[F [_], G[_], A]
-    (op: F[A] => Option[G[A]])
-    (implicit F: F :<: G)
-      : F[A] => G[A] =
+  def injectRepeatedly[F [_], G[_], A](op: F[A] => Option[G[A]])(implicit F: F :<: G): F[A] => G[A] =
     fa => op(fa).fold(F.inj(fa))(ga => F.prj(ga).fold(ga)(injectRepeatedly(op)))
 
+  @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
+  def MyinjectRepeatedly[F [_], G[_] <: CopK[_, _], A](op: F[A] => Option[G[A]])(implicit F: CopK.Inject[F, G]): F[A] => G[A] =
+    fa => op(fa).fold(F.inj(fa))(ga => F.prj(ga).fold(ga)(MyinjectRepeatedly(op)))
+
+/*
   // Helpers for creating `Injectable` instances
 
   object ::\:: {
@@ -292,5 +325,5 @@ package object qscript {
       : Injectable.Aux[Coproduct[F, G, ?], QScriptTotal[T, ?]] =
     Injectable.coproduct(
       Injectable.inject[F, QScriptTotal[T, ?]],
-      Injectable.inject[G, QScriptTotal[T, ?]])
+      Injectable.inject[G, QScriptTotal[T, ?]])*/
 }
