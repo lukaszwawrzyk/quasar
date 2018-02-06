@@ -43,6 +43,77 @@ import scalaz._, Scalaz._
   combine: JoinFunc[T])
 
 object EquiJoin {
+  /*
+  Missing Equal for FreeQS[T] which for Coproducts resolves to:
+
+  scalaz.Equal.apply[quasar.qscript.FreeQS[T]](matryoshka.`package`.delayEqual[[A]scalaz.Free[[$72$]scalaz.Coproduct[[$0$]quasar.qscript.QScriptCore[T,$0$],[$1$]scalaz.Coproduct[[$2$]quasar.qscript.ProjectBucket[T,
+$2$],[$3$]scalaz.Coproduct[[$4$]quasar.qscript.ThetaJoin[T,$4$],[$5$]scalaz.Coproduct[[$6$]quasar.qscript.EquiJoin[T,$6$],[$7$]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.A
+bs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]sca
+laz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxe
+d]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],$7$],$5$],$3$],$1$],$72$],A], quasar.qscript.Hole](qscript.this.Hole.equal, matryoshka.data.`package`.freeEqual[[A]scalaz.Coproduct[
+[$0$]quasar.qscript.QScriptCore[T,$0$],[$1$]scalaz.Coproduct[[$2$]quasar.qscript.ProjectBucket[T,$2$],[$3$]scalaz.Coproduct[[$4$]quasar.qscript.ThetaJoin[T,$4$],[$5$]scalaz.Coproduct[[$6$]quasar.qscript.EquiJo
+in[T,$6$],[$7$]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pat
+hy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coprod
+uct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],$7$],$5$],$3$],$1$],A]](scal
+az.this.Coproduct.coproductTraverse[[A]quasar.qscript.QScriptCore[T,A], [A]scalaz.Coproduct[[$2$]quasar.qscript.ProjectBucket[T,$2$],[$3$]scalaz.Coproduct[[$4$]quasar.qscript.ThetaJoin[T,$4$],[$5$]scalaz.Coproduct[[
+$6$]quasar.qscript.EquiJoin[T,$6$],[$7$]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasa
+r.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$1
+2$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],$7$],$5
+$],$3$],A]](qscript.this.QScriptCore.traverse[T], scalaz.this.Coproduct.coproductTraverse[[A]quasar.qscript.ProjectBucket[T,A], [A]scalaz.Coproduct[[$4$]quasar.qscript.ThetaJoin[T,$4$],[$5$]scalaz.Coproduct[[$6$]quasar.
+qscript.EquiJoin[T,$6$],[$7$]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.S
+hiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$
+]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],$7$],$5$],A]](qscr
+ipt.this.ProjectBucket.traverse[T], scalaz.this.Coproduct.coproductTraverse[[A]quasar.qscript.ThetaJoin[T,A], [A]scalaz.Coproduct[[$6$]quasar.qscript.EquiJoin[T,$6$],[$7$]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qscript.
+ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],[
+$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,
+pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],$7$],A]](qscript.this.ThetaJoin.traverse[T], scalaz.this.Coproduct.coproductTraverse[[A]quasar.qscript.Eq
+uiJoin[T,A], [A]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.
+Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct
+[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],A]](EquiJoin.this.traverse[T], scalaz.t
+his.Coproduct.coproductTraverse[[B]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],B], [A]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.P
+ath.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]sca
+laz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],A]](scalaz.this.Const.constTraverse[quasar.qscript.Shifted
+Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]]], scalaz.this.Coproduct.coproductTraverse[[B]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],B], [A]sca
+laz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path
+.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],A]](scalaz.this.Const.constTraverse[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]]], sc
+alaz.this.Coproduct.coproductTraverse[[B]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],B], [A]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,
+pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],A]](scalaz.this.Const.constTraverse[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]]], scalaz.t
+his.Coproduct.coproductTraverse[[B]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],B], [B]scalaz.Const[quasar.qscript.DeadEnd,B]](scalaz.this.Const.constTraverse[quasar.qscript.Re
+ad[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]]], scalaz.this.Const.constTraverse[quasar.qscript.DeadEnd])))))))), quasar.fp.`package`.coproductEqual[[A]quasar.qscript.QScriptCore[T,A], [A]scalaz.Coproduct[[
+$2$]quasar.qscript.ProjectBucket[T,$2$],[$3$]scalaz.Coproduct[[$4$]quasar.qscript.ThetaJoin[T,$4$],[$5$]scalaz.Coproduct[[$6$]quasar.qscript.EquiJoin[T,$6$],[$7$]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qscript
+.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],
+[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs
+,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],$7$],$5$],$3$],A]](qscript.this.QScriptCore.equal[T](evidence$1, evidence$2), quasar.fp.`package`.co
+productEqual[[A]quasar.qscript.ProjectBucket[T,A], [A]scalaz.Coproduct[[$4$]quasar.qscript.ThetaJoin[T,$4$],[$5$]scalaz.Coproduct[[$6$]quasar.qscript.EquiJoin[T,$6$],[$7$]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qs
+cript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$
+10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Pat
+h.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],$7$],$5$],A]](qscript.this.ProjectBucket.equal[T](evidence$1, evidence$2), quasar.fp.`package`.co
+productEqual[[A]quasar.qscript.ThetaJoin[T,A], [A]scalaz.Coproduct[[$6$]quasar.qscript.EquiJoin[T,$6$],[$7$]scalaz.Coproduct[[$8$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path
+.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Rea
+d[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.C
+onst[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],$7$],A]](qscript.this.ThetaJoin.equal[T](evidence$1, evidence$2), quasar.fp.`package`.coproductEqual[[A]quasar.qscript.EquiJoin[T,A], [A]scalaz.Coproduct[[$8$]scalaz.
+Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$8$],[$9$]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.
+Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy
+.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],$9$],A]](EquiJoin.this.equal[T](evidence$1, evidence$2), quasar.fp.`package`.coproductEqual
+[[B]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],B], [A]scalaz.Coproduct[[$10$]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.P
+ath.Sandboxed]],$10$],[$11$]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[p
+athy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],$13$],$11$],A]](quasar.fp.`package`.constEqual[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,p
+athy.Path.Dir,pathy.Path.Sandboxed]]](qscript.this.ShiftedRead.equal[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]](pathy.this.Path.pathOrder[pathy.Path.Abs, pathy.Path.Dir, pathy.Path.Sandboxed])), quasar.fp.`pa
+ckage`.coproductEqual[[B]scalaz.Const[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],B], [A]scalaz.Coproduct[[$12$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Pa
+th.Dir,pathy.Path.Sandboxed]],$12$],[$13$]scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],
+$13$],A]](quasar.fp.`package`.constEqual[quasar.qscript.ShiftedRead[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]]](qscript.this.ShiftedRead.equal[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed
+]](pathy.this.Path.pathOrder[pathy.Path.Abs, pathy.Path.File, pathy.Path.Sandboxed])), quasar.fp.`package`.coproductEqual[[B]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]],B], [A]
+scalaz.Coproduct[[$14$]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],$14$],[$15$]scalaz.Const[quasar.qscript.DeadEnd,$15$],A]](quasar.fp.`package`.constEqual[quasar.qscr
+ipt.Read[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]]](qscript.this.Read.equal[pathy.Path[pathy.Path.Abs,pathy.Path.Dir,pathy.Path.Sandboxed]](pathy.this.Path.pathOrder[pathy.Path.Abs, pathy.Path.Dir, pathy.Pat
+h.Sandboxed])), quasar.fp.`package`.coproductEqual[[B]scalaz.Const[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]],B], [B]scalaz.Const[quasar.qscript.DeadEnd,B]](quasar.fp.`package`.constEqual
+[quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]]](qscript.this.Read.equal[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]](pathy.this.Path.pathOrder[pathy.Path.Abs, pathy.Path.
+File, pathy.Path.Sandboxed])), quasar.fp.`package`.constEqual[quasar.qscript.DeadEnd](qscript.this.DeadEnd.equal))))))))))))
+
+ggwp matryoshka...
+
+
+  * */
+
   implicit def equal[T[_[_]]: BirecursiveT: EqualT]:
       Delay[Equal, EquiJoin[T, ?]] =
     new Delay[Equal, EquiJoin[T, ?]] {
