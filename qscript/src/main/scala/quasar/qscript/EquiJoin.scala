@@ -151,6 +151,33 @@ File, pathy.Path.Sandboxed])), quasar.fp.`package`.constEqual[quasar.qscript.Dea
 
   * */
 
+  // I should try compiling this in pre modified project or in this project replacing e and t with typed nulls
+  private def equal123[T[_[_]]: BirecursiveT: EqualT]: Delay[Equal, EquiJoin[T, ?]] = new Delay[Equal, EquiJoin[T, ?]] {
+    @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
+    def apply[A](eq: Equal[A]) = {
+      val t = Traverse[QScriptTotal[T, ?]]
+      val e = implicitly[Delay[Equal, QScriptTotal[T, ?]]]
+      val freeQSEq = Equal[FreeQS[T]](
+        delayEqual(
+          Hole.equal,
+          freeEqual(t, e)
+        )
+      )
+
+      Equal.equal {
+        case (EquiJoin(a1, l1, r1, k1, f1, c1),
+        EquiJoin(a2, l2, r2, k2, f2, c2)) =>
+          eq.equal(a1, a2) &&
+            freeQSEq.equal(l1, l2) &&
+            freeQSEq.equal(r1, r2) &&
+            k1 ≟ k2 &&
+            f1 ≟ f2 &&
+            c1 ≟ c2
+      }
+    }
+  }
+
+
   implicit def equal[T[_[_]]: BirecursiveT: EqualT]:
       Delay[Equal, EquiJoin[T, ?]] =
     new Delay[Equal, EquiJoin[T, ?]] {
