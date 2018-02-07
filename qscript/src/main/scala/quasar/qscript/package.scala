@@ -16,8 +16,10 @@
 
 package quasar
 
+import matryoshka.Delay
 import slamdata.Predef._
-import quasar.contrib.pathy.{ADir, AFile}
+import quasar.contrib.pathy.{ ADir, AFile }
+import quasar.fp.DelayedFG
 //import quasar.fp._ // remember to remove coproduct.scala file once it is not needed
 //import quasar.qscript.MapFuncCore._
 
@@ -72,6 +74,23 @@ package object qscript {
      ::: Const[Read[AFile], ?]
      ::: Const[DeadEnd, ?]
      ::: TNilK, A]
+
+  implicit def copkEq: Delay[Equal, CopK[_, ?]] = null
+  implicit def copkTraverse: Traverse[CopK[_, ?]] = null
+//  implicit def qstEqual[T[_[_]], A]: Delay[Equal, QScriptTotal[T, ?]] = null
+//  implicit def qstTraverse[T[_[_]], A]: Traverse[QScriptTotal[T, ?]] = null
+//  implicit def qstEqual[T[_[_]], A]: Delay[Equal, MapFunc[T, ?]] = null
+//  implicit def qstTraverse[T[_[_]], A]: Traverse[MapFunc[T, ?]] = null
+
+  private def coproductEqual[F[_], G[_]](implicit F: Delay[Equal, F], G: Delay[Equal, G]): Delay[Equal, Coproduct[F, G, ?]] =
+    Delay.fromNT(λ[Equal ~> DelayedFG[F, G]#Equal](eq =>
+      Equal equal ((cp1, cp2) =>
+        (cp1.run, cp2.run) match {
+          case (-\/(f1), -\/(f2)) => F(eq).equal(f1, f2)
+          case (\/-(g1), \/-(g2)) => G(eq).equal(g1, g2)
+          case (_,       _)       => false
+        })))
+
 
   object QCT {
     def apply[T[_[_]], A](qc: QScriptCore[T, A]): QScriptTotal[T, A] =
