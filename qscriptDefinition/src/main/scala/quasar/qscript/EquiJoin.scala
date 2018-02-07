@@ -109,8 +109,45 @@ h.Sandboxed])), quasar.fp.`package`.coproductEqual[[B]scalaz.Const[quasar.qscrip
 [quasar.qscript.Read[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]]](qscript.this.Read.equal[pathy.Path[pathy.Path.Abs,pathy.Path.File,pathy.Path.Sandboxed]](pathy.this.Path.pathOrder[pathy.Path.Abs, pathy.Path.
 File, pathy.Path.Sandboxed])), quasar.fp.`package`.constEqual[quasar.qscript.DeadEnd](qscript.this.DeadEnd.equal))))))))))))
 
-ggwp matryoshka...
 
+        scalaz.Equal.apply(
+          matryoshka.delayEqual(
+            Hole.equal,
+            matryoshka.data.freeEqual(
+              Coproduct.coproductTraverse(
+                QScriptCore.traverse,
+                Coproduct.coproductTraverse(
+                  ProjectBucket.traverse,
+                  Coproduct.coproductTraverse(
+                    ThetaJoin.traverse,
+                    Coproduct.coproductTraverse(
+                      EquiJoin.traverse,
+                      Coproduct.coproductTraverse(
+                        Const.constTraverse,
+                        Coproduct.coproductTraverse(
+                          Const.constTraverse,
+                          Coproduct.coproductTraverse(
+                            Const.constTraverse,
+                            Coproduct.coproductTraverse(
+                              Const.constTraverse,
+                              Const.constTraverse)))))))),
+              quasar.fp.coproductEqual(
+                QScriptCore.equal(evidence$1, evidence$2),
+                quasar.fp.coproductEqual(
+                  ProjectBucket.equal(evidence$1, evidence$2),
+                  quasar.fp.coproductEqual(
+                    ThetaJoin.equal(evidence$1, evidence$2),
+                    quasar.fp.coproductEqual(
+                      EquiJoin.equal(evidence$1, evidence$2),
+                      quasar.fp.coproductEqual(
+                        quasar.fp.constEqual(ShiftedRead.equal(pathy.Path.pathOrder)),
+                        quasar.fp.coproductEqual(
+                          quasar.fp.constEqual(ShiftedRead.equal(pathy.Path.pathOrder)),
+                          quasar.fp.coproductEqual(
+                            quasar.fp.constEqual(Read.equal(pathy.Path.pathOrder)),
+                            quasar.fp.coproductEqual(
+                              quasar.fp.constEqual(Read.equal(pathy.Path.pathOrder)),
+                              quasar.fp.constEqual(DeadEnd.equal))))))))))))
 
   * */
 
