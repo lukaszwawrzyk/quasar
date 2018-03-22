@@ -23,7 +23,7 @@ import quasar.ejson._
 import quasar.ejson.implicits._
 import quasar.fp._
 import quasar.fp.ski._
-import quasar.qscript.rewrites.{DedupeGuards, ExtractFiltering}
+//import quasar.qscript.rewrites.{DedupeGuards, ExtractFiltering}
 import quasar.std.TemporalPart
 
 import matryoshka._
@@ -338,11 +338,11 @@ object MapFuncCore {
 
   def normalize[T[_[_]]: BirecursiveT: EqualT, A: Equal]
       : CoMapFuncR[T, A] => CoMapFuncR[T, A] =
-    orOriginal(DedupeGuards[T, A]) <<<
+//    orOriginal(DedupeGuards[T, A]) <<<
     repeatedly(applyTransforms(
       foldConstant[T, A].apply(_) ∘ (const => rollMF[T, A](MFC(Constant(const)))),
-      rewrite[T, A],
-      ExtractFiltering[T, A]))
+      rewrite[T, A]/*,
+      ExtractFiltering[T, A]*/))
 
   def replaceJoinSides[T[_[_]]: BirecursiveT](left: Symbol, right: Symbol)
       : CoMapFuncR[T, JoinSide] => CoMapFuncR[T, JoinSide] =
@@ -630,7 +630,8 @@ object MapFuncCore {
 
         Show.show {
           // nullary
-          case Constant(v) => Cord("Constant(") ++ v.show ++ Cord(")")
+          // ehh... EJson is a scalaz Coproduct and show is not found for some reason
+          case Constant(v) => Cord("Constant(") /*++ v.show*/ ++ Cord(")")
           case Undefined() => Cord("Undefined()")
           case JoinSideName(n) => Cord("JoinSideName(") ++ n.show ++ Cord(")")
           case Now() => Cord("Now()")
@@ -734,7 +735,8 @@ object MapFuncCore {
 
         RenderTree.make {
           // nullary
-          case Constant(a1) => Terminal("Constant" :: nt, a1.shows.some)
+          // EJson is scalaz Coproduct, show not found
+          case Constant(a1) => Terminal("Constant" :: nt, /*a1.shows.some*/None)
           case Undefined() => Terminal("Undefined" :: nt, None)
           case JoinSideName(n) => Terminal("JoinSideName(" ::nt, n.shows.some)
           case Now() => Terminal("Now" :: nt, None)
