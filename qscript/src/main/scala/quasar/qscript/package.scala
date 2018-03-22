@@ -75,12 +75,8 @@ package object qscript {
      ::: Const[DeadEnd, ?]
      ::: TNilK, A]
 
-  implicit def copkEq: Delay[Equal, CopK[_, ?]] = null
-  implicit def copkTraverse: Traverse[CopK[_, ?]] = null
-//  implicit def qstEqual[T[_[_]], A]: Delay[Equal, QScriptTotal[T, ?]] = null
-//  implicit def qstTraverse[T[_[_]], A]: Traverse[QScriptTotal[T, ?]] = null
-//  implicit def qstEqual[T[_[_]], A]: Delay[Equal, MapFunc[T, ?]] = null
-//  implicit def qstTraverse[T[_[_]], A]: Traverse[MapFunc[T, ?]] = null
+  implicit def copkEq[X]: Delay[Equal, CopK[X, ?]] = null
+  implicit def copkTraverse[X]: Traverse[CopK[X, ?]] = null
 
   private def coproductEqual[F[_], G[_]](implicit F: Delay[Equal, F], G: Delay[Equal, G]): Delay[Equal, Coproduct[F, G, ?]] =
     Delay.fromNT(λ[Equal ~> DelayedFG[F, G]#Equal](eq =>
