@@ -76,7 +76,7 @@ object ThetaJoin {
           rBr.show ++ Cord(",") ++
           on.show ++ Cord(",") ++
           f.show ++ Cord(",") ++
-          combine.show ++ Cord(")")
+          Show[JoinFunc[T]](delayShow(JoinSide.show, freeShow(copkTraverse, copkShow2))).show(combine) ++ Cord(")")
       }
     }
 

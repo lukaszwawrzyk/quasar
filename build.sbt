@@ -412,6 +412,9 @@ lazy val qscriptDefinition =
       ScoverageKeys.coverageFailOnMinimum := true)
     .settings(excludeTypelevelScalaLibrary)
     .enablePlugins(AutomateHeaderPlugin)
+    .settings(wartremoverWarnings in (Compile, compile) := Seq())
+    .settings(wartremoverErrors in (Compile, compile) := Seq())
+    .settings(scalacOptions += "-Xprint:typer")
 
 /** Types and operations needed by connector implementations.
   */

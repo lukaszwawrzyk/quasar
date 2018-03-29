@@ -19,7 +19,6 @@ package quasar
 import matryoshka.Delay
 import slamdata.Predef._
 import quasar.contrib.pathy.{ ADir, AFile }
-import quasar.fp.DelayedFG
 //import quasar.fp._ // remember to remove coproduct.scala file once it is not needed
 //import quasar.qscript.MapFuncCore._
 
@@ -75,24 +74,19 @@ package object qscript {
      ::: Const[DeadEnd, ?]
      ::: TNilK, A]
 
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
-  implicit def copkEq[X <: TListK]: Delay[Equal, CopK[X, ?]] = null
+
+  // traverse F[_] + traverse G[_]
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copkTraverse[X <: TListK]: Traverse[CopK[X, ?]] = null
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
-  implicit def copkShow[X <: TListK]: Delay[Show, CopK[X, ?]] = null
+  implicit def copkEq[X <: TListK]: Delay[Equal, CopK[X, ?]] = null
+  import scala.language.experimental.macros
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  def copkShow[F[a] <: CopK[_, a]]: Delay[Show, F] = null // macro iotaz.internal.CopKInstances2.copkShow[F]
+  def copkShow2[F[a] <: CopK[_, a]]: Delay[Show, F] = macro iotaz.internal.CopKInstances2.copkShow[F]
+  implicit def copkShow3[F[a] <: CopK[_, a]]: Delay[Show, F] = macro PlsWork.gimmeNull[F]
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copKRenderTree[X <: TListK]: Delay[RenderTree, CopK[X, ?]] = null
-
-  private def coproductEqual[F[_], G[_]](implicit F: Delay[Equal, F], G: Delay[Equal, G]): Delay[Equal, Coproduct[F, G, ?]] =
-    Delay.fromNT(λ[Equal ~> DelayedFG[F, G]#Equal](eq =>
-      Equal equal ((cp1, cp2) =>
-        (cp1.run, cp2.run) match {
-          case (-\/(f1), -\/(f2)) => F(eq).equal(f1, f2)
-          case (\/-(g1), \/-(g2)) => G(eq).equal(g1, g2)
-          case (_,       _)       => false
-        })))
-
 
   object QCT {
     def apply[T[_[_]], A](qc: QScriptCore[T, A]): QScriptTotal[T, A] =
