@@ -171,14 +171,6 @@ package object qscript {
   type FreeMap[T[_[_]]]     = FreeMapA[T, Hole]
   type JoinFunc[T[_[_]]]    = FreeMapA[T, JoinSide]
 
-  object MyMFD {
-    def apply[T[_[_]], A](mfc: MapFuncDerived[T, A]): MyMapFunc[T, A] =
-      CopK.Inject[MapFuncDerived[T, ?], MyMapFunc[T, ?]].inj(mfc)
-
-    def unapply[T[_[_]], A](mf: MyMapFunc[T, A]): Option[MapFuncDerived[T, A]] =
-      CopK.Inject[MapFuncDerived[T, ?], MyMapFunc[T, ?]].prj(mf)
-  }
-
   type FreeQS[T[_[_]]]      = Free[QScriptTotal[T, ?], Hole]
   type FreeMapA[T[_[_]], A] = Free[MapFunc[T, ?], A]
   type FreeMap[T[_[_]]]     = FreeMapA[T, Hole]
@@ -188,22 +180,12 @@ package object qscript {
   type CoEnvMapA[T[_[_]], A, B] = CoEnv[A, MapFunc[T, ?], B]
   type CoEnvMap[T[_[_]], A]     = CoEnvMapA[T, Hole, A]
 
-  /*object ExtractFunc {
-    def unapply[T[_[_]], A](fma: FreeMapA[T, A]): Option[MapFuncCore[T, FreeMapA[T, A]]] = {
-      /* Likely we will need Traverse instances for CopK :///
-      TListK.Op#Map ??
-      Embed.unapply(fma)(
-        freeRecursive(Coproduct.coproductTraverse(MapFuncCore.traverse[T], MapFuncDerived.traverse[T])),
-        CoEnv.traverse(Coproduct.coproductTraverse(MapFuncCore.traverse[T], MapFuncDerived.traverse[T]))
-      )
-      */
-      fma match {
-        case Embed(CoEnv(\/-(MFC(func)))) => Some(func)
-        case _ => None
-      }
+  object ExtractFunc {
+    def unapply[T[_[_]], A](fma: FreeMapA[T, A]): Option[MapFuncCore[T, FreeMapA[T, A]]] = fma match {
+      case Embed(CoEnv(\/-(MFC(func)))) => Some(func)
+      case _ => None
     }
   }
-*/
 
   object ExtractFuncDerived {
     def unapply[T[_[_]], A](fma: FreeMapA[T, A]): Option[MapFuncDerived[T, FreeMapA[T, A]]] = fma match {
@@ -228,7 +210,7 @@ package object qscript {
       Option[T[F]] =
     target.as(src.transAna[T[QScriptTotal[T, ?]]](FI.inject)).cata(recover(_.embed)).transAnaM(FI project _)
 
-  /*def rebaseTCo[T[_[_]]: BirecursiveT, F[_]: Traverse]
+  def rebaseTCo[T[_[_]]: BirecursiveT, F[_]: Traverse]
     (target: FreeQS[T])
     (srcCo: T[CoEnv[Hole, F, ?]])
     (implicit FI: Injectable.Aux[F, QScriptTotal[T, ?]])
@@ -237,7 +219,7 @@ package object qscript {
     //       target.transAnaM(_.htraverse(FI project _)) ∘ (_ >> srcCo)
     target.cataM[Option, T[CoEnv[Hole, F, ?]]](
       CoEnv.htraverse(λ[QScriptTotal[T, ?] ~> (Option ∘ F)#λ](FI.project(_))).apply(_) ∘ (_.embed)) ∘
-      (targ => (targ.convertTo[Free[F, Hole]] >> srcCo.convertTo[Free[F, Hole]]).convertTo[T[CoEnv[Hole, F, ?]]])*/
+      (targ => (targ.convertTo[Free[F, Hole]] >> srcCo.convertTo[Free[F, Hole]]).convertTo[T[CoEnv[Hole, F, ?]]])
 
   /** A variant of `repeatedly` that works with `Inject` instances. */
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
