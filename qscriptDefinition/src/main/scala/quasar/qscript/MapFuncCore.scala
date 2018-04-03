@@ -267,10 +267,10 @@ object MapFuncCore {
           EC.inj(ejson.Str(v1.toUpperCase)).some
 
         // structural
-//        case MFC(MakeArray(ExtractFunc(Constant(v1)))) =>
-//          EC.inj(ejson.Arr(List(v1))).some
-//        case MFC(MakeMap(ConstEC(ejson.Str(v1)), ExtractFunc(Constant(v2)))) =>
-//          EX.inj(ejson.Map(List(EC.inj(ejson.Str[T[ejson.EJson]](v1)).embed -> v2))).some
+        case MFC(MakeArray(ExtractFunc(Constant(v1)))) =>
+          EC.inj(ejson.Arr(List(v1))).some
+        case MFC(MakeMap(ConstEC(ejson.Str(v1)), ExtractFunc(Constant(v2)))) =>
+          EX.inj(ejson.Map(List(EC.inj(ejson.Str[T[ejson.EJson]](v1)).embed -> v2))).some
         case MFC(ConcatArrays(ConstEC(ejson.Arr(v1)), ConstEC(ejson.Arr(v2)))) =>
           EC.inj(ejson.Arr(v1 ++ v2)).some
         case _ => None
@@ -294,45 +294,45 @@ object MapFuncCore {
   def extractFilter[T[_[_]]: BirecursiveT: EqualT, A: Equal](mf: FreeMapA[T, A])(test: A => Option[Hole])
     : Option[(FreeMap[T], FreeMapA[T, A], FreeMapA[T, A] => Option[FreeMapA[T, A]])] =
     mf.resume.swap.toOption >>= {
-//      case MFC(Cond(c, e, ExtractFunc(Undefined()))) =>
-//        c.traverse(test) ∘ ((_, e, {
-//          case Embed(CoEnv(\/-(MFC(Cond(c1, e1, ExtractFunc(Undefined())))))) =>
-//            (c1 ≟ c) option e1
-//
-//          case _ => none
-//        }))
-//
-//      case MFC(Cond(c, ExtractFunc(Undefined()), f)) =>
-//        c.traverse(test) ∘ (h => (Free.roll(MFC(Not[T, FreeMap[T]](h))), f, {
-//          case Embed(CoEnv(\/-(MFC(Cond(c1, ExtractFunc(Undefined()), f1))))) =>
-//            (c1 ≟ c) option f1
-//
-//          case _ => none
-//        }))
-//
-//      case MFC(Guard(c, t, e, ExtractFunc(Undefined()))) =>
-//        c.traverse(test) ∘ (h => (
-//          Free.roll(MFC(Guard(h, t, BoolLit[T, Hole](true), BoolLit[T, Hole](false)))),
-//          e,
-//          {
-//            case Embed(CoEnv(\/-(MFC(Guard(c1, t1, e1, ExtractFunc(Undefined())))))) =>
-//              (c1 ≟ c && t1 ≟ t) option e1
-//
-//            case _ => none
-//          }
-//        ))
-//
-//      case MFC(Guard(c, t, ExtractFunc(Undefined()), f)) =>
-//        c.traverse(test) ∘ (h => (
-//          Free.roll(MFC(Guard(h, t, BoolLit[T, Hole](false), BoolLit[T, Hole](true)))),
-//          f,
-//          {
-//            case Embed(CoEnv(\/-(MFC(Guard(c1, t1, ExtractFunc(Undefined()), f1))))) =>
-//              (c1 ≟ c && t1 ≟ t) option f1
-//
-//            case _ => none
-//          }
-//        ))
+      case MFC(Cond(c, e, ExtractFunc(Undefined()))) =>
+        c.traverse(test) ∘ ((_, e, {
+          case Embed(CoEnv(\/-(MFC(Cond(c1, e1, ExtractFunc(Undefined())))))) =>
+            (c1 ≟ c) option e1
+
+          case _ => none
+        }))
+
+      case MFC(Cond(c, ExtractFunc(Undefined()), f)) =>
+        c.traverse(test) ∘ (h => (Free.roll(MFC(Not[T, FreeMap[T]](h))), f, {
+          case Embed(CoEnv(\/-(MFC(Cond(c1, ExtractFunc(Undefined()), f1))))) =>
+            (c1 ≟ c) option f1
+
+          case _ => none
+        }))
+
+      case MFC(Guard(c, t, e, ExtractFunc(Undefined()))) =>
+        c.traverse(test) ∘ (h => (
+          Free.roll(MFC(Guard(h, t, BoolLit[T, Hole](true), BoolLit[T, Hole](false)))),
+          e,
+          {
+            case Embed(CoEnv(\/-(MFC(Guard(c1, t1, e1, ExtractFunc(Undefined())))))) =>
+              (c1 ≟ c && t1 ≟ t) option e1
+
+            case _ => none
+          }
+        ))
+
+      case MFC(Guard(c, t, ExtractFunc(Undefined()), f)) =>
+        c.traverse(test) ∘ (h => (
+          Free.roll(MFC(Guard(h, t, BoolLit[T, Hole](false), BoolLit[T, Hole](true)))),
+          f,
+          {
+            case Embed(CoEnv(\/-(MFC(Guard(c1, t1, ExtractFunc(Undefined()), f1))))) =>
+              (c1 ≟ c && t1 ≟ t) option f1
+
+            case _ => none
+          }
+        ))
       case _ => none
     }
 
@@ -374,54 +374,54 @@ object MapFuncCore {
       case Or(BoolLit(true), _) => some(BoolLit[T, A](true).project)
 
       case Eq(v1, v2) if v1 ≟ v2 => some(BoolLit[T, A](true).project)
-//
-//      case Eq(ExtractFunc(Constant(v1)), ExtractFunc(Constant(v2))) =>
-//        some(BoolLit[T, A](v1 ≟ v2).project)
-//
-//      case DeleteKey(
-//        Embed(StaticMap(map)),
-//        ExtractFunc(Constant(key))) =>
-//        StaticMap(map.filter(_._1 ≠ key)).project.some
-//
-//      // TODO: This could be generalized to any key, not just constant ones.
-//      case DeleteKey(
-//        Embed(StaticMapSuffix(ds @ _ :: _, ss)),
-//        ExtractFunc(Constant(k)))
-//          if ss.any(_._1 ≟ k) =>
-//        some(rollMF[T, A](MFC(DeleteKey(
-//          StaticMapSuffix(ds, ss.filterNot(_._1 ≟ k)),
-//          Free.roll(MFC(Constant(k)))))))
-//
-//      case ProjectIndex(
-//        Embed(StaticArrayPrefix(as)),
-//        ExtractFunc(Constant(Embed(EX(ejson.Int(index))))))
-//          if index.isValidInt =>
-//        as.lift(index.intValue).map(_.project)
-//
-//      case ProjectIndex(
-//        ExtractFunc(Cond(cond, Embed(StaticArrayPrefix(consArr)), Embed(StaticArrayPrefix(altArr)))),
-//        ExtractFunc(Constant(Embed(EX(ejson.Int(index))))))
-//          if index.isValidInt =>
-//        (consArr.lift(index.intValue) |@| altArr.lift(index.intValue)) {
-//          case (cons, alt) => rollMF[T, A](MFC(Cond(cond, cons, alt)))
-//        }
-//
-//      case ProjectKey(
-//        Embed(StaticMapSuffix(ds, ss)),
-//        kfm @ ExtractFunc(Constant(k)))
-//          if ds.any(_.fold(_._1 ≠ k, κ(false))) || ss.nonEmpty =>
-//        some(ss.reverse.find(_._1 ≟ k) map (_._2.project) getOrElse {
-//          rollMF[T, A](MFC(ProjectKey(
-//            StaticMapSuffix(ds.filter(_.fold(_._1 ≟ k, κ(true))), Nil),
-//            kfm)))
-//        })
-//
-//      case ProjectKey(
-//        ExtractFunc(Cond(cond, Embed(StaticMapSuffix(_, cs)), Embed(StaticMapSuffix(_, as)))),
-//        ExtractFunc(Constant(k))) =>
-//        (cs.reverse.find(_._1 ≟ k) |@| as.reverse.find(_._1 ≟ k)) {
-//          case ((_, cons), (_, alt)) => rollMF[T, A](MFC(Cond(cond, cons, alt)))
-//        }
+
+      case Eq(ExtractFunc(Constant(v1)), ExtractFunc(Constant(v2))) =>
+        some(BoolLit[T, A](v1 ≟ v2).project)
+
+      case DeleteKey(
+        Embed(StaticMap(map)),
+        ExtractFunc(Constant(key))) =>
+        StaticMap(map.filter(_._1 ≠ key)).project.some
+
+      // TODO: This could be generalized to any key, not just constant ones.
+      case DeleteKey(
+        Embed(StaticMapSuffix(ds @ _ :: _, ss)),
+        ExtractFunc(Constant(k)))
+          if ss.any(_._1 ≟ k) =>
+        some(rollMF[T, A](MFC(DeleteKey(
+          StaticMapSuffix(ds, ss.filterNot(_._1 ≟ k)),
+          Free.roll(MFC(Constant(k)))))))
+
+      case ProjectIndex(
+        Embed(StaticArrayPrefix(as)),
+        ExtractFunc(Constant(Embed(EX(ejson.Int(index))))))
+          if index.isValidInt =>
+        as.lift(index.intValue).map(_.project)
+
+      case ProjectIndex(
+        ExtractFunc(Cond(cond, Embed(StaticArrayPrefix(consArr)), Embed(StaticArrayPrefix(altArr)))),
+        ExtractFunc(Constant(Embed(EX(ejson.Int(index))))))
+          if index.isValidInt =>
+        (consArr.lift(index.intValue) |@| altArr.lift(index.intValue)) {
+          case (cons, alt) => rollMF[T, A](MFC(Cond(cond, cons, alt)))
+        }
+
+      case ProjectKey(
+        Embed(StaticMapSuffix(ds, ss)),
+        kfm @ ExtractFunc(Constant(k)))
+          if ds.any(_.fold(_._1 ≠ k, κ(false))) || ss.nonEmpty =>
+        some(ss.reverse.find(_._1 ≟ k) map (_._2.project) getOrElse {
+          rollMF[T, A](MFC(ProjectKey(
+            StaticMapSuffix(ds.filter(_.fold(_._1 ≟ k, κ(true))), Nil),
+            kfm)))
+        })
+
+      case ProjectKey(
+        ExtractFunc(Cond(cond, Embed(StaticMapSuffix(_, cs)), Embed(StaticMapSuffix(_, as)))),
+        ExtractFunc(Constant(k))) =>
+        (cs.reverse.find(_._1 ≟ k) |@| as.reverse.find(_._1 ≟ k)) {
+          case ((_, cons), (_, alt)) => rollMF[T, A](MFC(Cond(cond, cons, alt)))
+        }
 
       case ConcatArrays(Embed(StaticArray(Nil)), Embed(rhs)) => rhs.some
 
