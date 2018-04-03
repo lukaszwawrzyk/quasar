@@ -162,13 +162,13 @@ object MapFuncCore {
 
     private def extractAssocs[T[_[_]]: BirecursiveT, A](mf: FreeMapA[T, A]): Option[List[StaticAssoc[T, A]]] =
       some(mf) collect {
-//        case ExtractFunc(MakeMap(ExtractFunc(Constant(k)), v)) =>
-//          List(k -> v)
-//
-//        case ExtractFunc(Constant(Embed(EX(ejson.Map(kvs))))) =>
-//          Functor[List].compose[(T[EJson], ?)].map(kvs) { v =>
-//            Free.roll(MFC(Constant[T, FreeMapA[T, A]](v)))
-//          }
+        case ExtractFunc(MakeMap(ExtractFunc(Constant(k)), v)) =>
+          List(k -> v)
+
+        case ExtractFunc(Constant(Embed(EX(ejson.Map(kvs))))) =>
+          Functor[List].compose[(T[EJson], ?)].map(kvs) { v =>
+            Free.roll(MFC(Constant[T, FreeMapA[T, A]](v)))
+          }
         case _ => Nil
       }
   }
