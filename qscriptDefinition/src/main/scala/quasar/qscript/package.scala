@@ -172,22 +172,13 @@ package object qscript {
   type CoEnvMapA[T[_[_]], A, B] = CoEnv[A, MapFunc[T, ?], B]
   type CoEnvMap[T[_[_]], A]     = CoEnvMapA[T, Hole, A]
 
-  /*object ExtractFunc {
-    def unapply[T[_[_]], A](fma: FreeMapA[T, A]): Option[MapFuncCore[T, FreeMapA[T, A]]] = {
-      /* Likely we will need Traverse instances for CopK :///
-      TListK.Op#Map ??
-      Embed.unapply(fma)(
-        freeRecursive(Coproduct.coproductTraverse(MapFuncCore.traverse[T], MapFuncDerived.traverse[T])),
-        CoEnv.traverse(Coproduct.coproductTraverse(MapFuncCore.traverse[T], MapFuncDerived.traverse[T]))
-      )
-      */
-      fma match {
-        case Embed(CoEnv(\/-(MFC(func)))) => Some(func)
-        case _ => None
-      }
+  object ExtractFunc {
+    def unapply[T[_[_]], A](fma: FreeMapA[T, A]): Option[MapFuncCore[T, FreeMapA[T, A]]] = fma match {
+      case Embed(CoEnv(\/-(MFC(func)))) => Some(func)
+      case _ => None
     }
   }
-*/
+
   def HoleF[T[_[_]]]: FreeMap[T] = Free.point[MapFunc[T, ?], Hole](SrcHole)
   def HoleQS[T[_[_]]]: FreeQS[T] = Free.point[QScriptTotal[T, ?], Hole](SrcHole)
   def LeftSideF[T[_[_]]]: JoinFunc[T] = Free.point[MapFunc[T, ?], JoinSide](LeftSide)
@@ -203,7 +194,7 @@ package object qscript {
       Option[T[F]] =
     target.as(src.transAna[T[QScriptTotal[T, ?]]](FI.inject)).cata(recover(_.embed)).transAnaM(FI project _)
 
-  /*def rebaseTCo[T[_[_]]: BirecursiveT, F[_]: Traverse]
+  def rebaseTCo[T[_[_]]: BirecursiveT, F[_]: Traverse]
     (target: FreeQS[T])
     (srcCo: T[CoEnv[Hole, F, ?]])
     (implicit FI: Injectable.Aux[F, QScriptTotal[T, ?]])
@@ -212,7 +203,7 @@ package object qscript {
     //       target.transAnaM(_.htraverse(FI project _)) ∘ (_ >> srcCo)
     target.cataM[Option, T[CoEnv[Hole, F, ?]]](
       CoEnv.htraverse(λ[QScriptTotal[T, ?] ~> (Option ∘ F)#λ](FI.project(_))).apply(_) ∘ (_.embed)) ∘
-      (targ => (targ.convertTo[Free[F, Hole]] >> srcCo.convertTo[Free[F, Hole]]).convertTo[T[CoEnv[Hole, F, ?]]])*/
+      (targ => (targ.convertTo[Free[F, Hole]] >> srcCo.convertTo[Free[F, Hole]]).convertTo[T[CoEnv[Hole, F, ?]]])
 
   /** A variant of `repeatedly` that works with `Inject` instances. */
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
