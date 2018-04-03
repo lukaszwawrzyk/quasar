@@ -23,7 +23,7 @@ import quasar.ejson._
 import quasar.ejson.implicits._
 import quasar.fp._
 import quasar.fp.ski._
-//import quasar.qscript.rewrites.{DedupeGuards, ExtractFiltering}
+import quasar.qscript.rewrites.{DedupeGuards, ExtractFiltering}
 import quasar.std.TemporalPart
 
 import matryoshka._
@@ -338,11 +338,11 @@ object MapFuncCore {
 
   def normalize[T[_[_]]: BirecursiveT: EqualT, A: Equal]
       : CoMapFuncR[T, A] => CoMapFuncR[T, A] =
-//    orOriginal(DedupeGuards[T, A]) <<<
+    orOriginal(DedupeGuards[T, A]) <<<
     repeatedly(applyTransforms(
       foldConstant[T, A].apply(_) ∘ (const => rollMF[T, A](MFC(Constant(const)))),
-      rewrite[T, A]/*,
-      ExtractFiltering[T, A]*/))
+      rewrite[T, A],
+      ExtractFiltering[T, A]))
 
   def replaceJoinSides[T[_[_]]: BirecursiveT](left: Symbol, right: Symbol)
       : CoMapFuncR[T, JoinSide] => CoMapFuncR[T, JoinSide] =

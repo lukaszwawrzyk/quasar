@@ -75,15 +75,6 @@ package object qscript {
      ::: Const[DeadEnd, ?]
      ::: TNilK, A]
 
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
-  implicit def copkEq[X <: TListK]: Delay[Equal, CopK[X, ?]] = null
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
-  implicit def copkTraverse[X <: TListK]: Traverse[CopK[X, ?]] = null
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
-  implicit def copkShow[X <: TListK]: Delay[Show, CopK[X, ?]] = null
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
-  implicit def copKRenderTree[X <: TListK]: Delay[RenderTree, CopK[X, ?]] = null
-
   private def coproductEqual[F[_], G[_]](implicit F: Delay[Equal, F], G: Delay[Equal, G]): Delay[Equal, Coproduct[F, G, ?]] =
     Delay.fromNT(λ[Equal ~> DelayedFG[F, G]#Equal](eq =>
       Equal equal ((cp1, cp2) =>

@@ -18,6 +18,7 @@ package quasar
 
 import slamdata.Predef._
 
+import iotaz.{ CopK, TListK }
 import matryoshka._
 import matryoshka.data._
 import matryoshka.implicits._
@@ -219,6 +220,16 @@ package object fp
           case (\/-(g1), \/-(g2)) => G(eq).equal(g1, g2)
           case (_,       _)       => false
         })))
+
+
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkEqual[X <: TListK]: Delay[Equal, CopK[X, ?]] = null
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkTraverse[X <: TListK]: Traverse[CopK[X, ?]] = null
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkShow[X <: TListK]: Delay[Show, CopK[X, ?]] = null
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copKRenderTree[X <: TListK]: Delay[RenderTree, CopK[X, ?]] = null
 
   implicit def coproductShow[F[_], G[_]](implicit F: Delay[Show, F], G: Delay[Show, G]): Delay[Show, Coproduct[F, G, ?]] =
     Delay.fromNT(λ[Show ~> DelayedFG[F, G]#Show](sh =>
