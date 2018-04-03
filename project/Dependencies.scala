@@ -52,6 +52,7 @@ object Dependencies {
     "com.chuusai"                %% "shapeless"                 % shapelessVersion,
     "org.scalacheck"             %% "scalacheck"                % scalacheckVersion,
     "com.propensive"             %% "contextual"                % "1.0.1",
+    "io.frees"                   %% "iotaz-core"                % "0.3.4",
     "com.github.mpilquist"       %% "simulacrum"                % simulacrumVersion                    % Test,
     "org.typelevel"              %% "algebra-laws"              % algebraVersion                       % Test,
     "org.typelevel"              %% "discipline"                % disciplineVersion                    % Test,
@@ -96,10 +97,6 @@ object Dependencies {
     // Quasar attempts to connect to an h2 database to use as a metastore
     "com.h2database"              % "h2"                        % "1.4.196",
     "org.tpolecat"               %% "doobie-specs2"             % doobieVersion % Test
-  )
-
-  def qscript = Seq(
-    "io.frees" %% "iotaz-core" % "0.3.4"
   )
 
   def interface = Seq(

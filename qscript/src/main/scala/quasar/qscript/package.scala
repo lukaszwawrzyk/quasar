@@ -28,6 +28,7 @@ import quasar.fp.DelayedFG
 //import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
+import quasar.fp.SubInject
 
 import iotaz._
 import TListK.:::
@@ -107,15 +108,8 @@ package object qscript {
   type QScriptEducated[T[_[_]], A] =
     CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[Read[ADir], ?] ::: Const[Read[AFile], ?] ::: TNilK, A]
 
-/*
-Temporarly commented until figured out if it is needed
-  def educatedToTotal[T[_[_]]] : Injectable.Aux[QScriptEducated[T, ?], QScriptTotal[T, ?]] =
-    ::\::[QScriptCore[T, ?]](
-      ::\::[ThetaJoin[T, ?]](
-        ::/::[T, Const[Read[ADir], ?], Const[Read[AFile], ?]]
-      )
-    )
-*/
+  def educatedToTotal[T[_[_]]]
+      : Injectable.Aux[QScriptEducated[T, ?], QScriptTotal[T, ?]] = SubInject[QScriptEducated[T, ?], QScriptTotal[T, ?]]
 
   object QCE {
     def apply[T[_[_]], A](qc: QScriptCore[T, A]): QScriptEducated[T, A] =
@@ -129,11 +123,8 @@ Temporarly commented until figured out if it is needed
   type QScript[T[_[_]], A] =
     CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[DeadEnd, ?] ::: TNilK, A]
 
-  /*
   implicit def qScriptToQscriptTotal[T[_[_]]]
-      : Injectable.Aux[QScript[T, ?], QScriptTotal[T, ?]] =
-    ::\::[QScriptCore[T, ?]](::/::[T, ThetaJoin[T, ?], Const[DeadEnd, ?]])
-*/
+      : Injectable.Aux[QScript[T, ?], QScriptTotal[T, ?]] = SubInject[QScript[T, ?], QScriptTotal[T, ?]]
 
   /** QScript that has gone through Read conversion.
     *
@@ -142,10 +133,8 @@ Temporarly commented until figured out if it is needed
   type QScriptRead[T[_[_]], A] =
     CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[Read[ADir], ?] ::: Const[Read[AFile], ?] ::: TNilK, A]
 
-  /*
-  implicit def qScriptReadToQscriptTotal[T[_[_]]]: Injectable.Aux[QScriptRead[T, ?], QScriptTotal[T, ?]] =
-    ::\::[QScriptCore[T, ?]](::\::[ThetaJoin[T, ?]](::/::[T, Const[Read[ADir], ?], Const[Read[AFile], ?]]))
-*/
+  implicit def qScriptReadToQscriptTotal[T[_[_]]]
+      : Injectable.Aux[QScriptRead[T, ?], QScriptTotal[T, ?]] = SubInject[QScriptRead[T, ?], QScriptTotal[T, ?]]
 
   /** QScript that has gone through Read conversion and shifted conversion.
     *
@@ -154,10 +143,8 @@ Temporarly commented until figured out if it is needed
   type QScriptShiftRead[T[_[_]], A] =
     CopK[QScriptCore[T, ?] ::: ThetaJoin[T, ?] ::: Const[ShiftedRead[ADir], ?] ::: Const[ShiftedRead[AFile], ?] ::: TNilK, A]
 
-  /*
-  implicit def qScriptShiftReadToQScriptTotal[T[_[_]]]: Injectable.Aux[QScriptShiftRead[T, ?], QScriptTotal[T, ?]] =
-    ::\::[QScriptCore[T, ?]](::\::[ThetaJoin[T, ?]](::/::[T, Const[ShiftedRead[ADir], ?], Const[ShiftedRead[AFile], ?]]))
-*/
+  implicit def qScriptShiftReadToQScriptTotal[T[_[_]]]
+      : Injectable.Aux[QScriptShiftRead[T, ?], QScriptTotal[T, ?]] = SubInject[QScriptShiftRead[T, ?], QScriptTotal[T, ?]]
 
   type MapFunc[T[_[_]], A] = CopK[MapFuncCore[T, ?] ::: MapFuncDerived[T, ?] ::: TNilK, A]
 
