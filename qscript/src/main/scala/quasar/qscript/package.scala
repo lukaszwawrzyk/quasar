@@ -20,15 +20,14 @@ import matryoshka.Delay
 import slamdata.Predef._
 import quasar.contrib.pathy.{ ADir, AFile }
 import quasar.fp.DelayedFG
-//import quasar.fp._ // remember to remove coproduct.scala file once it is not needed
+import quasar.fp._ // TODO remember to remove coproduct.scala file once it is not needed
 //import quasar.qscript.MapFuncCore._
 
-//import matryoshka.{Hole => _, _}
-//import matryoshka.data._
-//import matryoshka.implicits._
+import matryoshka.{Hole => _, _}
+import matryoshka.data._
+import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
-import quasar.fp.SubInject
 
 import iotaz._
 import TListK.:::
@@ -222,14 +221,14 @@ package object qscript {
 
   def rebase[M[_]: Bind, A](in: M[A], key: M[A]): M[A] = in >> key
 
-  /*def rebaseT[T[_[_]]: BirecursiveT, F[_]: Traverse](
+  def rebaseT[T[_[_]]: BirecursiveT, F[_]: Traverse](
     target: FreeQS[T])(
     src: T[F])(
     implicit FI: Injectable.Aux[F, QScriptTotal[T, ?]]):
       Option[T[F]] =
     target.as(src.transAna[T[QScriptTotal[T, ?]]](FI.inject)).cata(recover(_.embed)).transAnaM(FI project _)
 
-  def rebaseTCo[T[_[_]]: BirecursiveT, F[_]: Traverse]
+  /*def rebaseTCo[T[_[_]]: BirecursiveT, F[_]: Traverse]
     (target: FreeQS[T])
     (srcCo: T[CoEnv[Hole, F, ?]])
     (implicit FI: Injectable.Aux[F, QScriptTotal[T, ?]])
