@@ -630,8 +630,7 @@ object MapFuncCore {
 
         Show.show {
           // nullary
-          // ehh... EJson is a scalaz Coproduct and show is not found for some reason
-          case Constant(v) => Cord("Constant(") /*++ v.show*/ ++ Cord(")")
+          case Constant(v) => Cord("Constant(") ++ v.show ++ Cord(")")
           case Undefined() => Cord("Undefined()")
           case JoinSideName(n) => Cord("JoinSideName(") ++ n.show ++ Cord(")")
           case Now() => Cord("Now()")
@@ -735,8 +734,7 @@ object MapFuncCore {
 
         RenderTree.make {
           // nullary
-          // EJson is scalaz Coproduct, show not found
-          case Constant(a1) => Terminal("Constant" :: nt, /*a1.shows.some*/None)
+          case Constant(a1) => Terminal("Constant" :: nt, a1.shows.some)
           case Undefined() => Terminal("Undefined" :: nt, None)
           case JoinSideName(n) => Terminal("JoinSideName(" ::nt, n.shows.some)
           case Now() => Terminal("Now" :: nt, None)
