@@ -169,7 +169,6 @@ object MapFuncCore {
           Functor[List].compose[(T[EJson], ?)].map(kvs) { v =>
             Free.roll(MFC(Constant[T, FreeMapA[T, A]](v)))
           }
-        case _ => Nil
       }
   }
 
