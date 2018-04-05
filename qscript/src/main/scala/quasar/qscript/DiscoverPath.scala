@@ -31,6 +31,7 @@ import matryoshka.implicits._
 import matryoshka.patterns._
 import pathy.Path.{dir1, file1, rootDir}
 import scalaz._, Scalaz._, \&/._
+import iotaz.{ CopK, TListK }
 
 /** This extracts statically-known paths from QScript queries to make it easier
   * for connectors to map queries to their own filesystems.
@@ -63,12 +64,12 @@ object DiscoverPath extends DiscoverPathInstances {
   def apply[T[_[_]], IN[_], OUT[_]](implicit ev: DiscoverPath.Aux[T, IN, OUT]) =
     ev
 
-  def unionAll[T[_[_]]: BirecursiveT, M[_]: Monad: MonadFsErr, OUT[_]: Functor]
+  def unionAll[T[_[_]]: BirecursiveT, M[_]: Monad: MonadFsErr, OUT[_] <: ACopK : Functor]
     (g: ListContents[M])
     (implicit
-      RD:  Const[Read[ADir], ?] :<: OUT,
-      RF: Const[Read[AFile], ?] :<: OUT,
-      QC:     QScriptCore[T, ?] :<: OUT,
+      RD:  Const[Read[ADir], ?] :<<: OUT,
+      RF: Const[Read[AFile], ?] :<<: OUT,
+      QC:     QScriptCore[T, ?] :<<: OUT,
       FI: Injectable.Aux[OUT, QScriptTotal[T, ?]])
       : List[ADir] \&/ T[OUT] => M[T[OUT]] =
     discoverPath[T, OUT].unionAll[M](g)
@@ -77,11 +78,11 @@ object DiscoverPath extends DiscoverPathInstances {
 abstract class DiscoverPathInstances {
   import DiscoverPath.ListContents
 
-  def discoverPath[T[_[_]]: BirecursiveT, O[_]: Functor]
+  def discoverPath[T[_[_]]: BirecursiveT, O[_] <: ACopK : Functor]
     (implicit
-      RD:  Const[Read[ADir], ?] :<: O,
-      RF: Const[Read[AFile], ?] :<: O,
-      QC:     QScriptCore[T, ?] :<: O,
+      RD:  Const[Read[ADir], ?] :<<: O,
+      RF: Const[Read[AFile], ?] :<<: O,
+      QC:     QScriptCore[T, ?] :<<: O,
       FI: Injectable.Aux[O, QScriptTotal[T, ?]]) =
     new DiscoverPathT[T, O]
 
@@ -96,43 +97,43 @@ abstract class DiscoverPathInstances {
         κ(-\&/[List[ADir], T[OUT]](List(rootDir)).point[M])
     }
 
-  implicit def projectBucket[T[_[_]]: BirecursiveT, F[_]: Functor]
+  implicit def projectBucket[T[_[_]]: BirecursiveT, F[_] <: ACopK : Functor]
     (implicit
-      RD:  Const[Read[ADir], ?] :<: F,
-      RF: Const[Read[AFile], ?] :<: F,
-      QC:     QScriptCore[T, ?] :<: F,
-      PB:   ProjectBucket[T, ?] :<: F,
+      RD:  Const[Read[ADir], ?] :<<: F,
+      RF: Const[Read[AFile], ?] :<<: F,
+      QC:     QScriptCore[T, ?] :<<: F,
+      PB:   ProjectBucket[T, ?] :<<: F,
       FI: Injectable.Aux[F, QScriptTotal[T, ?]])
       : DiscoverPath.Aux[T, ProjectBucket[T, ?], F] =
     discoverPath[T, F].projectBucket
 
-  implicit def qscriptCore[T[_[_]]: BirecursiveT, F[_]: Functor]
+  implicit def qscriptCore[T[_[_]]: BirecursiveT, F[_] <: ACopK : Functor]
     (implicit
-      RD:  Const[Read[ADir], ?] :<: F,
-      RF: Const[Read[AFile], ?] :<: F,
-      QC:     QScriptCore[T, ?] :<: F,
+      RD:  Const[Read[ADir], ?] :<<: F,
+      RF: Const[Read[AFile], ?] :<<: F,
+      QC:     QScriptCore[T, ?] :<<: F,
       FI: Injectable.Aux[F, QScriptTotal[T, ?]])
       : DiscoverPath.Aux[T, QScriptCore[T, ?], F] =
     discoverPath[T, F].qscriptCore
 
   // branch handling
 
-  implicit def thetaJoin[T[_[_]]: BirecursiveT, F[_]: Functor]
+  implicit def thetaJoin[T[_[_]]: BirecursiveT, F[_] <: ACopK : Functor]
     (implicit
-      RD:  Const[Read[ADir], ?] :<: F,
-      RF: Const[Read[AFile], ?] :<: F,
-      QC:     QScriptCore[T, ?] :<: F,
-      TJ:       ThetaJoin[T, ?] :<: F,
+      RD:  Const[Read[ADir], ?] :<<: F,
+      RF: Const[Read[AFile], ?] :<<: F,
+      QC:     QScriptCore[T, ?] :<<: F,
+      TJ:       ThetaJoin[T, ?] :<<: F,
       FI: Injectable.Aux[F, QScriptTotal[T, ?]])
       : DiscoverPath.Aux[T, ThetaJoin[T, ?], F] =
     discoverPath[T, F].thetaJoin
 
-  implicit def equiJoin[T[_[_]]: BirecursiveT, F[_]: Functor]
+  implicit def equiJoin[T[_[_]]: BirecursiveT, F[_] <: ACopK : Functor]
     (implicit
-      RD:  Const[Read[ADir], ?] :<: F,
-      RF: Const[Read[AFile], ?] :<: F,
-      QC:     QScriptCore[T, ?] :<: F,
-      EJ:        EquiJoin[T, ?] :<: F,
+      RD:  Const[Read[ADir], ?] :<<: F,
+      RF: Const[Read[AFile], ?] :<<: F,
+      QC:     QScriptCore[T, ?] :<<: F,
+      EJ:        EquiJoin[T, ?] :<<: F,
       FI: Injectable.Aux[F, QScriptTotal[T, ?]])
       : DiscoverPath.Aux[T, EquiJoin[T, ?], F] =
     discoverPath[T, F].equiJoin
@@ -148,32 +149,35 @@ abstract class DiscoverPathInstances {
         _.run.fold(F.discoverPath(g), G.discoverPath(g))
     }
 
-  implicit def read[T[_[_]]: BirecursiveT, F[_]: Functor, A]
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkDiscoverPath[T[_[_]], X <: TListK, H[_]]: DiscoverPath.Aux[T, CopK[X, ?], H] = null
+
+  implicit def read[T[_[_]]: BirecursiveT, F[_] <: ACopK : Functor, A]
     (implicit
-      RD:  Const[Read[ADir], ?] :<: F,
-      RF: Const[Read[AFile], ?] :<: F,
-      QC:     QScriptCore[T, ?] :<: F,
-      RA:     Const[Read[A], ?] :<: F,
+      RD:  Const[Read[ADir], ?] :<<: F,
+      RF: Const[Read[AFile], ?] :<<: F,
+      QC:     QScriptCore[T, ?] :<<: F,
+      RA:     Const[Read[A], ?] :<<: F,
       FI: Injectable.Aux[F, QScriptTotal[T, ?]])
       : DiscoverPath.Aux[T, Const[Read[A], ?], F] =
     discoverPath[T, F].default[Const[Read[A], ?]]
 
-  implicit def shiftedRead[T[_[_]]: BirecursiveT, F[_]: Functor, A]
+  implicit def shiftedRead[T[_[_]]: BirecursiveT, F[_] <: ACopK : Functor, A]
     (implicit
-      RD:     Const[Read[ADir], ?] :<: F,
-      RF:    Const[Read[AFile], ?] :<: F,
-      QC:        QScriptCore[T, ?] :<: F,
-      IN: Const[ShiftedRead[A], ?] :<: F,
+      RD:     Const[Read[ADir], ?] :<<: F,
+      RF:    Const[Read[AFile], ?] :<<: F,
+      QC:        QScriptCore[T, ?] :<<: F,
+      IN: Const[ShiftedRead[A], ?] :<<: F,
       FI: Injectable.Aux[F, QScriptTotal[T, ?]])
       : DiscoverPath.Aux[T, Const[ShiftedRead[A], ?], F] =
     discoverPath[T, F].default[Const[ShiftedRead[A], ?]]
 }
 
-private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_]: Functor](
+private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_] <: ACopK : Functor](
   implicit
-  RD:  Const[Read[ADir], ?] :<: O,
-  RF: Const[Read[AFile], ?] :<: O,
-  QC:     QScriptCore[T, ?] :<: O,
+  RD:  Const[Read[ADir], ?] :<<: O,
+  RF: Const[Read[AFile], ?] :<<: O,
+  QC:     QScriptCore[T, ?] :<<: O,
   FI: Injectable.Aux[O, QScriptTotal[T, ?]]
 ) extends TTypes[T] {
   import DiscoverPath.ListContents
@@ -188,13 +192,13 @@ private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_]: Functor]
         elem.cata[FreeQS](g => Free.roll(FI.inject(g))),
         acc.cata[FreeQS](g => Free.roll(FI.inject(g))))).embed)
 
-  private def makeRead[F[_]](path: ADir)(implicit R: Const[Read[ADir], ?] :<: F):
+  private def makeRead[F[_] <: ACopK](path: ADir)(implicit R: Const[Read[ADir], ?] :<<: F):
       F[T[F]] =
     R.inj(Const[Read[ADir], T[F]](Read(path)))
 
-  private def wrapDir[F[_]: Functor]
+  private def wrapDir[F[_] <: ACopK : Functor]
     (name: String, d: F[T[F]])
-    (implicit QC: QScriptCore :<: F)
+    (implicit QC: QScriptCore :<<: F)
       : F[T[F]] =
     QC.inj(Map(d.embed, recFunc.MakeMapS(name, recFunc.Hole)))
 
@@ -237,7 +241,7 @@ private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_]: Functor]
 
   // real instances
 
-  def projectBucket(implicit PB: ProjectBucket :<: O): DiscoverPath.Aux[T, ProjectBucket, O] =
+  def projectBucket(implicit PB: ProjectBucket :<<: O): DiscoverPath.Aux[T, ProjectBucket, O] =
     new DiscoverPath[ProjectBucket] {
       type IT[F[_]] = T[F]
       type OUT[A] = O[A]
@@ -302,7 +306,7 @@ private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_]: Functor]
 
   // branch handling
 
-  def thetaJoin(implicit TJ: ThetaJoin :<: O): DiscoverPath.Aux[T, ThetaJoin, O] =
+  def thetaJoin(implicit TJ: ThetaJoin :<<: O): DiscoverPath.Aux[T, ThetaJoin, O] =
     new DiscoverPath[ThetaJoin] {
       type IT[F[_]] = T[F]
       type OUT[A] = O[A]
@@ -315,7 +319,7 @@ private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_]: Functor]
       }
     }
 
-  def equiJoin(implicit EJ: EquiJoin :<: O): DiscoverPath.Aux[T, EquiJoin, O] =
+  def equiJoin(implicit EJ: EquiJoin :<<: O): DiscoverPath.Aux[T, EquiJoin, O] =
     new DiscoverPath[EquiJoin] {
       type IT[F[_]] = T[F]
       type OUT[A] = O[A]
@@ -328,7 +332,7 @@ private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_]: Functor]
       }
     }
 
-  def default[IN[_]: Traverse](implicit IN: IN :<: O): DiscoverPath.Aux[T, IN, O] =
+  def default[IN[_]: Traverse](implicit IN: IN :<<: O): DiscoverPath.Aux[T, IN, O] =
     new DiscoverPath[IN] {
       type IT[F[_]] = T[F]
       type OUT[A] = O[A]
