@@ -612,7 +612,7 @@ object QScriptUniform {
 
     private val O = Optics[T]
 
-    def mfc[A] = PrismNT.inject[MapFuncCore, MapFunc].asPrism[A]
+    def mfc[A] = PrismNT.injectCopK[MapFuncCore, MapFunc].asPrism[A]
 
     private def composeLifting[G[_]](optic: Prism[QScriptUniform[A], G[A]]) =
       iso composePrism lifting[QScriptUniform[A], G[A]](optic)

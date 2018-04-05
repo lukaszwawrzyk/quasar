@@ -19,7 +19,7 @@ package quasar.qscript.qsu
 import slamdata.Predef._
 import quasar.Planner.{InternalError, PlannerErrorME}
 import quasar.ejson.implicits._
-import quasar.fp.{coproductEqual, coproductShow, symbolOrder, symbolShow}
+import quasar.fp.{copkEqual, copkShow, copkTraverse, coproductEqual, coproductShow, symbolOrder, symbolShow}
 import quasar.qscript.FreeMap
 
 import matryoshka._
