@@ -235,16 +235,6 @@ package object fp
     Delay.fromNT(λ[Show ~> DelayedFG[F, G]#Show](sh =>
       Show show (_.run.fold(F(sh).show, G(sh).show))))
 
-  implicit def myCoproductShow[F[_], G[_]](implicit F: Delay[Show, F], G: Delay[Show, G]): Delay[Show, Coproduct[F, G, ?]] = {
-    Delay.fromNT[Show, Coproduct[F, G, ?]] {
-      new ~>[Show, λ[a => Show[Coproduct[F, G, a]]]] {
-        override def apply[A](sha: Show[A]): Show[Coproduct[F, G, A]] = {
-          Show.show[Coproduct[F, G, A]](_.run.fold(F.apply(sha).show, G.apply(sha).show))
-        }
-      }
-    }
-  }
-
   implicit def constEqual[A: Equal]: Delay[Equal, Const[A, ?]] =
     Delay.fromNT(λ[Equal ~> DelayedA[A]#Equal](_ =>
       Equal equal (_.getConst ≟ _.getConst)))
