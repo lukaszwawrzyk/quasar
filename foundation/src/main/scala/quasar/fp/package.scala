@@ -221,6 +221,11 @@ package object fp
           case (_,       _)       => false
         })))
 
+  // Applied CopK type useful to define type upper bounds
+  type ACopK = CopK[_, _]
+  // Version of :<: for Iotaz
+  type :<<:[F[_], G[_] <: ACopK] = CopK.Inject[F, G]
+
 
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copkEqual[X <: TListK]: Delay[Equal, CopK[X, ?]] = null
