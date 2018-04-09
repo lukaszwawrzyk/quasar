@@ -149,6 +149,7 @@ abstract class DiscoverPathInstances {
         _.run.fold(F.discoverPath(g), G.discoverPath(g))
     }
 
+  // TODO provide actual instance
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copkDiscoverPath[T[_[_]], X <: TListK, H[_]]: DiscoverPath.Aux[T, CopK[X, ?], H] = null
 

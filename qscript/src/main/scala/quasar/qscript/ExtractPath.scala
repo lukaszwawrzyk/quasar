@@ -16,14 +16,17 @@
 
 package quasar.qscript
 
+import iotaz.{ CopK, TListK }
 import slamdata.Predef._
 import quasar.fp.ski.κ
-
+import quasar.fp.copkTraverse
 import matryoshka._
 import matryoshka.data._
 import matryoshka.implicits._
 import matryoshka.patterns._
-import scalaz._, Scalaz._
+
+import scalaz._
+import Scalaz._
 import shapeless.Lazy
 
 /** Extracts paths of particular type from QScript, collecting them in the
@@ -47,6 +50,11 @@ sealed abstract class ExtractPathInstances extends ExtractPathInstances0 {
       def extractPath[H[_]: ApplicativePlus]: Algebra[Coproduct[F, G, ?], H[P]] =
         _.run.fold(F.value.extractPath[H], G.value.extractPath[H])
     }
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkExtractPath[X <: TListK, P]: ExtractPath[CopK[X, ?], P] = null
+
 
   implicit def constRead[A, P >: A]: ExtractPath[Const[Read[A], ?], P] =
     new ExtractPath[Const[Read[A], ?], P] {
