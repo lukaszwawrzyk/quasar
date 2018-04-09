@@ -20,7 +20,7 @@ import slamdata.Predef.{Map => _, _}
 
 import quasar.ejson
 import quasar.ejson.{EJson, ExtEJson}
-import quasar.fp.PrismNT
+import quasar.fp.{copkTraverse, :<<:, ACopK, PrismNT}
 import quasar.fp.ski.κ
 import quasar.qscript._
 import quasar.qscript.analysis.Outline
@@ -30,6 +30,7 @@ import matryoshka.data.free._
 import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
+import iotaz.{CopK, TListK}
 
 /** A rewrite that, where possible, replaces map key deletion with construction
   * of a new map containing the keys in the complement of the singleton set consisting
@@ -89,14 +90,14 @@ object PreferProjection extends PreferProjectionInstances {
   /** Replaces key deletion of a map having statically known structure with a
     * projection of the complement of the deleted key.
     */
-  def projectComplementƒ[T[_[_]]: BirecursiveT, F[_]: Functor, A]
-      (implicit I: MapFuncCore[T, ?] :<: F)
+  def projectComplementƒ[T[_[_]]: BirecursiveT, F[_] <: ACopK : Functor, A]
+      (implicit I: MapFuncCore[T, ?] :<<: F)
       : ElgotAlgebra[(Outline.Shape, ?), CoEnv[A, F, ?], Free[F, A]] = {
 
     import MapFuncsCore._
 
     type U = Free[F, A]
-    val P = PrismNT.inject[MapFuncCore[T, ?], F] compose PrismNT.coEnv[F, A]
+    val P = PrismNT.injectCopK[MapFuncCore[T, ?], F] compose PrismNT.coEnv[F, A]
 
     {
       case (shape, mfc @ P(DeleteKey(src, _))) =>
@@ -131,6 +132,11 @@ object PreferProjection extends PreferProjectionInstances {
 
 sealed abstract class PreferProjectionInstances {
   import PreferProjection.projectComplement
+
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def preferProjectionCopK[X <: TListK, T, B[_]]: PreferProjection[CopK[X, ?], T, B] = null
 
   implicit def coproduct[F[_], G[_], T, B[_]](
       implicit
