@@ -271,8 +271,10 @@ object RenderQScriptDSL {
       DSLTree(base, "ReduceIndex", ((idx.toString + suffix).left :: Nil).some)
   }
 
-  def qscriptTotalRenderDelay[T[_[_]]: RecursiveT]: Delay[RenderQScriptDSL, QScriptTotal[T, ?]] =
-    coproduct(qscriptCoreRenderDelay[T],
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  def qscriptTotalRenderDelay[T[_[_]]: RecursiveT]: Delay[RenderQScriptDSL, QScriptTotal[T, ?]] = {
+    /*coproduct(qscriptCoreRenderDelay[T],
       coproduct(projectBucketRenderDelay[T],
         coproduct(thetaJoinRenderDelay[T],
           coproduct(equiJoinRenderDelay[T],
@@ -280,7 +282,9 @@ object RenderQScriptDSL {
               coproduct(shiftedReadFileRenderDelay,
                 coproduct(readDirRenderDelay,
                   coproduct(readFileRenderDelay,
-                    deadEndRenderDelay))))))))
+                    deadEndRenderDelay))))))))*/
+    null
+  }
 
   def freeQSRender[T[_[_]]: RecursiveT]: RenderQScriptDSL[FreeQS[T]] =
     freeDelayRenderQScriptDSL[T, QScriptTotal[T, ?], Hole](qscriptTotalRenderDelay[T], holeRender("free"))
