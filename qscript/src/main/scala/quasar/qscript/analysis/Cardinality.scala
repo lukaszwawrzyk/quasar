@@ -28,6 +28,7 @@ import matryoshka.implicits._
 import matryoshka.data._
 import scalaz._, Scalaz._
 import simulacrum.typeclass
+import iotaz.{CopK, TListK}
 
 @typeclass
 trait Cardinality[F[_]] {
@@ -50,7 +51,7 @@ object Cardinality {
 
   implicit def qscriptCore[T[_[_]]: RecursiveT: ShowT]: Cardinality[QScriptCore[T, ?]] =
     new Cardinality[QScriptCore[T, ?]] {
-      val I = Inject[QScriptCore[T, ?], QScriptTotal[T, ?]]
+      val I = CopK.Inject[QScriptCore[T, ?], QScriptTotal[T, ?]]
 
       @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
       def calculate[M[_] : Monad](pathCard: APath => M[Int]): AlgebraM[M, QScriptCore[T, ?], Int] = {
@@ -121,6 +122,10 @@ object Cardinality {
       def calculate[M[_] : Monad](pathCard: APath => M[Int]): AlgebraM[M, Coproduct[F, G, ?], Int] =
         _.run.fold(F.calculate(pathCard), G.calculate(pathCard))
     }
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def cardinalityCopK[X <: TListK]: Cardinality[CopK[X, ?]] = null
 
   ////////
 
