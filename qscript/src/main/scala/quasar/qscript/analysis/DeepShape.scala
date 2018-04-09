@@ -31,6 +31,7 @@ import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
 import iotaz.{CopK, TListK}
+
 trait DeepShape[T[_[_]], F[_]] {
   def deepShapeƒ: Algebra[F, DeepShape.FreeShape[T]]
 }
