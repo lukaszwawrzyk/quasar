@@ -18,6 +18,7 @@ package quasar.qsu
 
 import quasar.qscript.{RecFreeMapA, RecFreeS}
 import quasar.qsu.{QScriptUniform => QSU}
+import quasar.fp._
 
 import matryoshka.BirecursiveT
 import scalaz.syntax.applicative._
