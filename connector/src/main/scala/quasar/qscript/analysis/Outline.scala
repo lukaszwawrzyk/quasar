@@ -34,6 +34,7 @@ import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
 import simulacrum.typeclass
+import iotaz.{CopK, TListK}
 
 /** Computes the statically known shape of `F[_]`.
   *
@@ -148,6 +149,11 @@ object Outline extends OutlineInstances {
 
 sealed abstract class OutlineInstances {
   import Outline._
+
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def deepShapeCopK[X <: TListK]: Outline[CopK[X, ?]] = null
 
   implicit def coproduct[F[_], G[_]]
       (implicit F: Outline[F], G: Outline[G])
