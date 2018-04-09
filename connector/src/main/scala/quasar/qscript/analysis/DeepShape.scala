@@ -30,7 +30,7 @@ import matryoshka.data.free._
 import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
-
+import iotaz.{CopK, TListK}
 trait DeepShape[T[_[_]], F[_]] {
   def deepShapeƒ: Algebra[F, DeepShape.FreeShape[T]]
 }
@@ -107,6 +107,10 @@ object DeepShape extends DeepShapeInstances {
 
 sealed abstract class DeepShapeInstances {
   import DeepShape._
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def deepShapeCopK[T[_[_]], X <: TListK]: DeepShape[T, CopK[X, ?]] = null
 
   implicit def coproduct[T[_[_]], F[_], G[_]]
     (implicit F: DeepShape[T, F], G: DeepShape[T, G])
