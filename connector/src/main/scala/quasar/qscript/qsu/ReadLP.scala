@@ -58,7 +58,7 @@ import matryoshka.{AlgebraM, BirecursiveT}
 import matryoshka.implicits._
 import matryoshka.patterns.{interpretM, CoEnv}
 import pathy.Path.{rootDir, Sandboxed}
-import scalaz.{\/, Free, Inject, Monad, StateT}
+import scalaz.{\/, Free, Monad, StateT}
 import scalaz.std.tuple._
 import scalaz.syntax.bifunctor._
 import scalaz.syntax.either._
@@ -66,12 +66,13 @@ import scalaz.syntax.equal._
 import scalaz.syntax.foldable._
 import scalaz.syntax.monad._
 import shapeless.Sized
+import iotaz.CopK
 
 final class ReadLP[T[_[_]]: BirecursiveT] private () extends QSUTTypes[T] {
   private type QSU[A] = QScriptUniform[A]
 
-  private val IC = Inject[MapFuncCore, MapFunc]
-  private val ID = Inject[MapFuncDerived, MapFunc]
+  private val IC = CopK.Inject[MapFuncCore, MapFunc]
+  private val ID = CopK.Inject[MapFuncDerived, MapFunc]
 
   def apply[
       F[_]: Monad: PlannerErrorME: NameGenerator](

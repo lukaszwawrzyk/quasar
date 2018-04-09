@@ -19,17 +19,17 @@ package quasar.qscript
 import quasar._
 import quasar.qscript.{MapFuncsCore => C, MapFuncsDerived => D}
 import quasar.std.StdLib._
-import scalaz._
+import quasar.fp.:<<:
 
 object MapFunc {
   def translateNullaryMapping[T[_[_]], MF[_], A]
-      (implicit MFC: MapFuncCore[T, ?] :<: MF)
+      (implicit MFC: MapFuncCore[T, ?] :<<: MF)
       : scala.PartialFunction[NullaryFunc, MF[A]] = {
     case date.Now => MFC(C.Now())
   }
 
   def translateUnaryMapping[T[_[_]], MF[_], A]
-      (implicit MFC: MapFuncCore[T, ?] :<: MF, MFD: MapFuncDerived[T, ?] :<: MF)
+      (implicit MFC: MapFuncCore[T, ?] :<<: MF, MFD: MapFuncDerived[T, ?] :<<: MF)
       : scala.PartialFunction[UnaryFunc, A => MF[A]] = {
     case date.ExtractCentury => a => MFC(C.ExtractCentury(a))
     case date.ExtractDayOfMonth => a => MFC(C.ExtractDayOfMonth(a))
@@ -81,7 +81,7 @@ object MapFunc {
   }
 
   def translateBinaryMapping[T[_[_]], MF[_], A]
-      (implicit MFC: MapFuncCore[T, ?] :<: MF, MFD: MapFuncDerived[T, ?] :<: MF)
+      (implicit MFC: MapFuncCore[T, ?] :<<: MF, MFD: MapFuncDerived[T, ?] :<<: MF)
       : scala.PartialFunction[BinaryFunc, (A, A) => MF[A]] = {
     // NB: ArrayLength takes 2 params because of SQL, but we really don’t care
     //     about the second. And it shouldn’t even have two in LP.
@@ -118,7 +118,7 @@ object MapFunc {
   }
 
   def translateTernaryMapping[T[_[_]], MF[_], A]
-      (implicit MFC: MapFuncCore[T, ?] :<: MF)
+      (implicit MFC: MapFuncCore[T, ?] :<<: MF)
       : scala.PartialFunction[TernaryFunc, (A, A, A) => MF[A]] = {
     case relations.Between => (a1, a2, a3) => MFC(C.Between(a1, a2, a3))
     case relations.Cond    => (a1, a2, a3) => MFC(C.Cond(a1, a2, a3))
