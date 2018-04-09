@@ -20,7 +20,7 @@ import slamdata.Predef.{Map => SMap, _}
 
 import quasar.{NameGenerator, RenderTreeT}
 import quasar.Planner.{InternalError, PlannerErrorME}
-import quasar.fp.symbolOrder
+import quasar.fp.{symbolOrder, copkTraverse}
 import quasar.qscript.{construction, JoinSide, LeftSide, RightSide}
 import quasar.sql.JoinDir
 
