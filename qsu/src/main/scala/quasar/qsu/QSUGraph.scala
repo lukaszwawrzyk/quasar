@@ -552,7 +552,7 @@ object QSUGraph extends QSUGraphInstances {
 
     object AutoJoin2C {
       def unapply[T[_[_]]](qgraph: QSUGraph[T])(
-          implicit IC: MapFuncCore[T, ?] :<: MapFunc[T, ?])
+          implicit IC: MapFuncCore[T, ?] :<<: MapFunc[T, ?])
           : Option[(QSUGraph[T], QSUGraph[T], MapFuncCore[T, JoinSide])] = qgraph match {
 
         case AutoJoin2(left, right, fm) =>
