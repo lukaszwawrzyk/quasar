@@ -17,7 +17,7 @@
 package quasar.qscript.rewrites
 
 import quasar.contrib.pathy.AFile
-import quasar.fp.coenvPrism
+import quasar.fp.{coenvPrism, copkTraverse}
 import quasar.qscript._
 import quasar.qscript.rewrites.ShiftRead.FixFreeH
 
