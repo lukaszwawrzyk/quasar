@@ -31,6 +31,7 @@ import matryoshka.data._
 import matryoshka.implicits._
 import pathy.Path.{dir1, file1}
 import scalaz._, Scalaz._
+import iotaz.{CopK, TListK}
 
 /** Converts any {Shifted}Read containing a directory to a union of all the
   * files in that directory.
@@ -96,6 +97,10 @@ abstract class ExpandDirsInstances {
   implicit def equiJoin[T[_[_]]: BirecursiveT, F[_]](implicit EJ: EquiJoin[T, ?] :<: F)
       : ExpandDirs.Aux[T, EquiJoin[T, ?], F] =
     expandDirsBranch[T].equiJoin[F]
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def expandDirsCopK[T[_[_]], X <: TListK, H[_]]: ExpandDirs.Aux[T, CopK[X, ?], H] = null
 
   implicit def coproduct[T[_[_]], F[_], G[_], H[_]]
     (implicit F: ExpandDirs.Aux[T, F, H], G: ExpandDirs.Aux[T, G, H])
