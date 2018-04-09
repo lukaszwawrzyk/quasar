@@ -198,7 +198,7 @@ package object qscript {
 
   /** A variant of `repeatedly` that works with `Inject` instances. */
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-  def injectRepeatedly[F [_], G[_] <: CopK[_, _], A](op: F[A] => Option[G[A]])(implicit F: CopK.Inject[F, G]): F[A] => G[A] =
+  def injectRepeatedly[F [_], G[_] <: ACopK, A](op: F[A] => Option[G[A]])(implicit F: F :<<: G): F[A] => G[A] =
     fa => op(fa).fold(F.inj(fa))(ga => F.prj(ga).fold(ga)(injectRepeatedly(op)))
 
 /*
