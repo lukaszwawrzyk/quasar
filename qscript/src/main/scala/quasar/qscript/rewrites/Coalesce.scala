@@ -32,6 +32,7 @@ import matryoshka.data._
 import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
+import iotaz.{CopK, TListK}
 
 /** Rewrites adjacent nodes. */
 trait Coalesce[IN[_]] {
@@ -110,6 +111,10 @@ trait CoalesceInstances {
     (implicit EJ: EquiJoin[T, ?] :<: G)
       : Coalesce.Aux[T, EquiJoin[T, ?], G] =
     coalesce[T].equiJoin[G]
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def coalesceCopK[T[_[_]], X <: TListK, I[_]]: Coalesce.Aux[T, CopK[X, ?], I] = null
 
   implicit def coproduct[T[_[_]], G[_], H[_], I[_]]
     (implicit G: Coalesce.Aux[T, G, I],
