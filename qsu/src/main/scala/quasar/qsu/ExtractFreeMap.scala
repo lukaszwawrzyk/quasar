@@ -21,7 +21,7 @@ import slamdata.Predef.{Map => SMap, _}
 import quasar.RenderTreeT
 import quasar.fs.Planner.{InternalError, PlannerErrorME}
 import quasar.effect.NameGenerator
-import quasar.fp.symbolOrder
+import quasar.fp.{symbolOrder, copkTraverse}
 import quasar.qscript.RecFreeS._
 import quasar.qscript.{construction, JoinSide, LeftSide, RightSide}
 import quasar.sql.JoinDir
