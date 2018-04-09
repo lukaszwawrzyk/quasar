@@ -249,6 +249,9 @@ package object fp
 
   }
 
+  // TODO Needed to injectRepeatedly in quasar/qscript/rewrites/Rewrite.scala:85, but CopK.Inject is sealed :/
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def reflexiveCopKInjectInstance[F[_] <: ACopK]: CopK.Inject[F, F] = null
 
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copkEqual[X <: TListK]: Delay[Equal, CopK[X, ?]] = null
