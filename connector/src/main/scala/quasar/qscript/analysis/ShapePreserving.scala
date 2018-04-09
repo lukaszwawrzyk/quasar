@@ -28,6 +28,7 @@ import matryoshka.implicits._
 import matryoshka.patterns._
 import scalaz._, Scalaz._
 import simulacrum._
+import iotaz.{CopK, TListK}
 
 /** Determines if `IN[_]` preserves the shape of its underlying `ShiftedRead`.
   * If it does preserve that shape then it returns the `IdStatus` of that
@@ -68,6 +69,10 @@ object ShapePreserving {
       def shapePreservingƒ: Algebra[G, Option[IdStatus]] =
         x => GtoF.get(x).flatMap(F.shapePreservingƒ)
     }
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def shapePreservingCopK[X <: TListK]: ShapePreserving[CopK[X, ?]] = null
 
   implicit def coproduct[F[_], G[_]]
     (implicit F: ShapePreserving[F], G: ShapePreserving[G])
