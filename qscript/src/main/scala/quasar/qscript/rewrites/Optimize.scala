@@ -26,7 +26,7 @@ import matryoshka.implicits._
 import scalaz._, Scalaz._
 
 class Optimize[T[_[_]]: BirecursiveT: EqualT: ShowT] extends TTypes[T] {
-  private val FI = Injectable.inject[QScriptCore, QScriptTotal]
+  private val FI = Injectable.injectCopK[QScriptCore, QScriptTotal]
 
   /** Pull more work to _after_ count operations, limiting the dataset. */
   // TODO: we should be able to pull _most_ of a Reduce repair function to after a Subset
