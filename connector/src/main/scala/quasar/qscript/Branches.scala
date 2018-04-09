@@ -21,6 +21,8 @@ import matryoshka.patterns._
 
 import monocle._
 import scalaz._, Scalaz._
+import slamdata.Predef._
+import iotaz.{CopK, TListK}
 
 trait Branches[T[_[_]], IN[_]] {
   def branches[A]: Traversal[IN[A], FreeQS[T]]
@@ -36,6 +38,10 @@ object Branches {
             Applicative[F].pure(s)
         }
     }
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def branchesCopK[T[_[_]], X <: TListK]: Branches[T, CopK[X, ?]] = null
 
   implicit def coproduct[T[_[_]], G[_], H[_]]
     (implicit G: Branches[T, G], H: Branches[T, H])
