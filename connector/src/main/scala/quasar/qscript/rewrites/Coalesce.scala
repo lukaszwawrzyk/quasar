@@ -634,7 +634,7 @@ class CoalesceT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TType
             ifNeq(freeQC))(
             EquiJoin(ej.src, _, _, ej.key, ej.f, ej.combine))
 
-          val qct = Inject[QScriptCore, QScriptTotal]
+          val qct = CopK.Inject[QScriptCore, QScriptTotal]
 
           def coalesceBranchMaps(ej: EquiJoin[T[F]]): Option[EquiJoin[T[F]]] = {
             def coalesceSide(branch: FreeQS, key: List[FreeMap], side: JoinSide):
