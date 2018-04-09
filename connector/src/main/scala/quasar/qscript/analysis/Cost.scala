@@ -28,6 +28,7 @@ import matryoshka.implicits._
 import matryoshka.data._
 import scalaz._, Scalaz._
 import simulacrum.typeclass
+import iotaz.{CopK, TListK}
 
 @typeclass
 trait Cost[F[_]] {
@@ -115,5 +116,9 @@ object Cost {
       def evaluate[M[_] : Monad](pathCard: APath => M[Int]): GAlgebraM[(Int, ?), M, Coproduct[F, G, ?], Int] =
         _.run.fold(F.evaluate(pathCard), G.evaluate(pathCard))
     }
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def costCopK[X <: TListK]: Cost[CopK[X, ?]] = null
 
 }
