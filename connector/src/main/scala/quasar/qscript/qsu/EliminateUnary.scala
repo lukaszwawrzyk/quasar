@@ -18,10 +18,12 @@ package quasar.qscript.qsu
 
 import quasar.qscript.FreeMapA
 import quasar.qscript.qsu.{QScriptUniform => QSU}
+import quasar.fp._
 
 import matryoshka.BirecursiveT
 import scalaz.Free
 import scalaz.syntax.applicative._
+import slamdata.Predef.Int
 
 object EliminateUnary {
   import QSUGraph.Extractors._

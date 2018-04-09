@@ -18,7 +18,8 @@ package quasar
 
 import slamdata.Predef._
 
-import iotaz.{ CopK, TListK }
+import iotaz.{ CopK, TListK, TNilK }
+import iotaz.TListK.:::
 import matryoshka._
 import matryoshka.data._
 import matryoshka.implicits._
@@ -225,6 +226,28 @@ package object fp
   type ACopK = CopK[_, _]
   // Version of :<: for Iotaz
   type :<<:[F[_], G[_] <: ACopK] = CopK.Inject[F, G]
+
+  implicit class TwoElemCopKToEitherOps[F[_], G[_], A](val copK: CopK[F ::: G ::: TNilK, A])(
+    implicit
+    IF: CopK.Inject[F, CopK[F ::: G ::: TNilK, ?]],
+    IG: CopK.Inject[G, CopK[F ::: G ::: TNilK, ?]]
+  ) {
+
+    def map[B](f: A => B)(implicit F: Functor[F], G: Functor[G]): CopK[F ::: G ::: TNilK, B] = {
+      copK match {
+        case IF(fa) => IF(F.map(fa)(f))
+        case IG(ga) => IG(G.map(ga)(f))
+      }
+    }
+
+    def toDisjunction: F[A] \/ G[A] = {
+      copK match {
+        case IF(fa) => -\/(fa)
+        case IG(ga) => \/-(ga)
+      }
+    }
+
+  }
 
 
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
