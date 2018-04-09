@@ -586,8 +586,8 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
 
   def normalizeTJCoEnv[F[_]: Traverse: Normalizable](
     implicit C:  Coalesce.Aux[T, F, F],
-             QC: QScriptCore :<: F,
-             TJ: ThetaJoin :<: F,
+             QC: QScriptCore :<<: F,
+             TJ: ThetaJoin :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
       F[Free[F, Hole]] => CoEnv[Hole, F, Free[F, Hole]] =
     normalizeTJBijection[F, CoEnv[Hole, F, ?], Free[F, Hole]](coenvBijection)(coenvPrism, rebaseTCo)
