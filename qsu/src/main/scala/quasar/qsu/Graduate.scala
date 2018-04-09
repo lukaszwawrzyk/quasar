@@ -60,8 +60,9 @@ import quasar.qsu.ReifyIdentities.ResearchedQSU
 import matryoshka.{Corecursive, BirecursiveT, CoalgebraM, Recursive, ShowT}
 import matryoshka.data._
 import matryoshka.patterns.CoEnv
-import scalaz.{~>, -\/, \/-, \/, Const, Inject, Monad, NonEmptyList, NaturalTransformation, ReaderT}
+import scalaz.{~>, -\/, \/-, \/, Const, Monad, NonEmptyList, NaturalTransformation, ReaderT}
 import scalaz.Scalaz._
+import iotaz.CopK
 
 final class Graduate[T[_[_]]: BirecursiveT: ShowT] private () extends QSUTTypes[T] {
 
@@ -175,7 +176,7 @@ final class Graduate[T[_[_]]: BirecursiveT: ShowT] private () extends QSUTTypes[
 
       qsu match {
         case QSU.Read(path) =>
-          Inject[Const[Read[AFile], ?], QSE].inj(Const(Read(path))).point[F]
+          CopK.Inject[Const[Read[AFile], ?], QSE].inj(Const(Read(path))).point[F]
 
         case QSU.Map(source, fm) =>
           QCE(Map[T, QSUGraph](source, fm)).point[F]
@@ -253,14 +254,14 @@ final class Graduate[T[_[_]]: BirecursiveT: ShowT] private () extends QSUTTypes[
 
           (mergeSources[F](left, right) |@| condition) {
             case (SrcMerge(source, lBranch, rBranch), cond) =>
-              Inject[ThetaJoin, QSE].inj(
+              CopK.Inject[ThetaJoin, QSE].inj(
                 ThetaJoin[T, QSUGraph](source, lBranch, rBranch, cond, JoinType.Inner, combiner))
           }
 
         case QSU.ThetaJoin(left, right, condition, joinType, combiner) =>
           mergeSources[F](left, right) map {
             case SrcMerge(source, lBranch, rBranch) =>
-              Inject[ThetaJoin, QSE].inj(
+              CopK.Inject[ThetaJoin, QSE].inj(
                 ThetaJoin[T, QSUGraph](source, lBranch, rBranch, condition, joinType, combiner))
           }
 
