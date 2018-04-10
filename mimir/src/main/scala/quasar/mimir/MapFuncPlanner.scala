@@ -38,6 +38,11 @@ object MapFuncPlanner {
     (implicit ev: MapFuncPlanner[T, F, MF]): MapFuncPlanner[T, F, MF] =
     ev
 
+  import iotaz.{CopK, TListK}
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copKMapFuncPlanner[T[_[_]], X <: TListK, F[_]]: MapFuncPlanner[T, F, CopK[X, ?]] = null
+
   implicit def coproduct[T[_[_]], F[_]: Applicative, G[_], H[_]]
     (implicit G: MapFuncPlanner[T, F, G], H: MapFuncPlanner[T, F, H])
       : MapFuncPlanner[T, F, Coproduct[G, H, ?]] =
