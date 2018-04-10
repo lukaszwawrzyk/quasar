@@ -20,6 +20,8 @@ import quasar.fp.EndoK
 import quasar.qscript._
 
 import scalaz._
+import iotaz.{CopK, TListK}
+import slamdata.Predef.{Array, SuppressWarnings}
 
 /** This optional transformation changes the semantics of [[Read]]. The default
   * semantics return a single value, whereas the transformed version has an
@@ -61,6 +63,10 @@ object SimplifyProjection {
 
   implicit def coproduct[T[_[_]], G[_], I[_], J[_]](implicit I: Aux[I, G], J: Aux[J, G]): Aux[Coproduct[I, J, ?], G] =
     make(λ[Coproduct[I, J, ?] ~> G](fa => fa.run.fold(I.simplifyProjection, J.simplifyProjection)))
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkSimplifyProjection[T[_[_]], X <: TListK, G[_]]: Aux[CopK[X, ?], G] = null
 
   // This assembles the coproduct out of the individual implicits.
   def simplifyQScriptTotal[T[_[_]]]: Aux[QScriptTotal[T, ?], QScriptTotal[T, ?]] = apply
