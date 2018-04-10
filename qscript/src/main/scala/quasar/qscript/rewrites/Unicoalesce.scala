@@ -110,61 +110,61 @@ object UnicoalesceQC extends UnicoalesceQCLowPriorityImplicits {
   }
 }
 
-sealed trait UnicoalesceSR[T[_[_]], C <: CoM] extends Unicoalesce[T, C]
+sealed trait UnicoalesceSR[T[_[_]], C[_] <: ACopK] extends Unicoalesce[T, C]
 
 private[qscript] trait UnicoalesceSRLowPriorityImplicits {
-  implicit def default[T[_[_]], C <: CoM]: UnicoalesceSR[T, C] = new UnicoalesceSR[T, C] {
-    def apply(C: Coalesce.Aux[T, C#M, C#M])(implicit F: Functor[C#M]) = κ(None)
+  implicit def default[T[_[_]], C[_] <: ACopK]: UnicoalesceSR[T, C] = new UnicoalesceSR[T, C] {
+    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) = κ(None)
   }
 }
 
 object UnicoalesceSR extends UnicoalesceSRLowPriorityImplicits {
 
   // TODO the A might not infer here
-  implicit def member[T[_[_]], A, C <: CoM](
+  implicit def member[T[_[_]], A, C[_] <: ACopK](
     implicit
-      QC: QScriptCore[T, ?] :<: C#M,
-      SR: Const[ShiftedRead[A], ?] :<: C#M): UnicoalesceSR[T, C] = new UnicoalesceSR[T, C] {
+      QC: QScriptCore[T, ?] :<<: C,
+      SR: Const[ShiftedRead[A], ?] :<<: C): UnicoalesceSR[T, C] = new UnicoalesceSR[T, C] {
 
-    def apply(C: Coalesce.Aux[T, C#M, C#M])(implicit F: Functor[C#M]) =
-      C.coalesceSR[C#M, A](idPrism)
+    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) =
+      C.coalesceSR[C, A](idPrism)
   }
 }
 
-sealed trait UnicoalesceEJ[T[_[_]], C <: CoM] extends Unicoalesce[T, C]
+sealed trait UnicoalesceEJ[T[_[_]], C[_] <: ACopK] extends Unicoalesce[T, C]
 
 private[qscript] trait UnicoalesceEJLowPriorityImplicits {
-  implicit def default[T[_[_]], C <: CoM]: UnicoalesceEJ[T, C] = new UnicoalesceEJ[T, C] {
-    def apply(C: Coalesce.Aux[T, C#M, C#M])(implicit F: Functor[C#M]) = κ(None)
+  implicit def default[T[_[_]], C[_] <: ACopK]: UnicoalesceEJ[T, C] = new UnicoalesceEJ[T, C] {
+    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) = κ(None)
   }
 }
 
 object UnicoalesceEJ extends UnicoalesceEJLowPriorityImplicits {
 
-  implicit def member[T[_[_]], C <: CoM](
+  implicit def member[T[_[_]], C[_] <: ACopK](
     implicit
-      QC: EquiJoin[T, ?] :<: C#M): UnicoalesceEJ[T, C] = new UnicoalesceEJ[T, C] {
+      QC: EquiJoin[T, ?] :<<: C): UnicoalesceEJ[T, C] = new UnicoalesceEJ[T, C] {
 
-    def apply(C: Coalesce.Aux[T, C#M, C#M])(implicit F: Functor[C#M]) =
-      C.coalesceEJ[C#M](idPrism.get)
+    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) =
+      C.coalesceEJ[C](idPrism.get)
   }
 }
 
-sealed trait UnicoalesceTJ[T[_[_]], C <: CoM] extends Unicoalesce[T, C]
+sealed trait UnicoalesceTJ[T[_[_]], C[_] <: ACopK] extends Unicoalesce[T, C]
 
 private[qscript] trait UnicoalesceTJLowPriorityImplicits {
-  implicit def default[T[_[_]], C <: CoM]: UnicoalesceTJ[T, C] = new UnicoalesceTJ[T, C] {
-    def apply(C: Coalesce.Aux[T, C#M, C#M])(implicit F: Functor[C#M]) = κ(None)
+  implicit def default[T[_[_]], C[_] <: ACopK]: UnicoalesceTJ[T, C] = new UnicoalesceTJ[T, C] {
+    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) = κ(None)
   }
 }
 
 object UnicoalesceTJ extends UnicoalesceTJLowPriorityImplicits {
 
-  implicit def member[T[_[_]], C <: CoM](
+  implicit def member[T[_[_]], C[_] <: ACopK](
     implicit
-      QC: ThetaJoin[T, ?] :<: C#M): UnicoalesceTJ[T, C] = new UnicoalesceTJ[T, C] {
+      QC: ThetaJoin[T, ?] :<<: C): UnicoalesceTJ[T, C] = new UnicoalesceTJ[T, C] {
 
-    def apply(C: Coalesce.Aux[T, C#M, C#M])(implicit F: Functor[C#M]) =
-      C.coalesceTJ[C#M](idPrism.get)
+    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) =
+      C.coalesceTJ[C](idPrism.get)
   }
 }

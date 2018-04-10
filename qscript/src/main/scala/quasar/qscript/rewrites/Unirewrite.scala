@@ -25,9 +25,10 @@ import matryoshka._
 import matryoshka.implicits._
 import scalaz._
 import scalaz.syntax.all._
-import iotaz.{TListK, TNilK, CopK}
+import iotaz.{TNilK, CopK}
 import iotaz.TListK.:::
 import iotaz.TListK.Op.Concat
+import slamdata.Predef.Int
 
 sealed trait Unirewrite[T[_[_]], C[_] <: ACopK] {
   def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[C]]
