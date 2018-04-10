@@ -19,16 +19,16 @@ package quasar.qscript
 import quasar._
 import quasar.qscript.{MapFuncsCore => C, MapFuncsDerived => D}
 import quasar.std.StdLib._
-import quasar.fp.:<<:
+import quasar.fp.{:<<:,ACopK}
 
 object MapFunc {
-  def translateNullaryMapping[T[_[_]], MF[_], A]
+  def translateNullaryMapping[T[_[_]], MF[_] <: ACopK, A]
       (implicit MFC: MapFuncCore[T, ?] :<<: MF)
       : scala.PartialFunction[NullaryFunc, MF[A]] = {
     case date.Now => MFC(C.Now())
   }
 
-  def translateUnaryMapping[T[_[_]], MF[_], A]
+  def translateUnaryMapping[T[_[_]], MF[_] <: ACopK, A]
       (implicit MFC: MapFuncCore[T, ?] :<<: MF, MFD: MapFuncDerived[T, ?] :<<: MF)
       : scala.PartialFunction[UnaryFunc, A => MF[A]] = {
     case date.ExtractCentury => a => MFC(C.ExtractCentury(a))
@@ -80,7 +80,7 @@ object MapFunc {
     case structural.Meta => a => MFC(C.Meta(a))
   }
 
-  def translateBinaryMapping[T[_[_]], MF[_], A]
+  def translateBinaryMapping[T[_[_]], MF[_] <: ACopK, A]
       (implicit MFC: MapFuncCore[T, ?] :<<: MF, MFD: MapFuncDerived[T, ?] :<<: MF)
       : scala.PartialFunction[BinaryFunc, (A, A) => MF[A]] = {
     // NB: ArrayLength takes 2 params because of SQL, but we really don’t care
@@ -117,7 +117,7 @@ object MapFunc {
        | structural.ConcatOp => (a1, a2) => MFC(C.ConcatArrays(a1, a2))
   }
 
-  def translateTernaryMapping[T[_[_]], MF[_], A]
+  def translateTernaryMapping[T[_[_]], MF[_] <: ACopK, A]
       (implicit MFC: MapFuncCore[T, ?] :<<: MF)
       : scala.PartialFunction[TernaryFunc, (A, A, A) => MF[A]] = {
     case relations.Between => (a1, a2, a3) => MFC(C.Between(a1, a2, a3))
