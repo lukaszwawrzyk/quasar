@@ -144,7 +144,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
   def NoneBranch[F[_], A, B] =
     BranchUnification[F, A, B]((_: JoinFunc) => None)((_: FreeMapA[A]) => None)
 
-  def unifySimpleBranchesJoinSide[F[_], A]
+  def unifySimpleBranchesJoinSide[F[_] <: ACopK, A]
     (src: A, left: FreeQS, right: FreeQS)
     (rebase: FreeQS => A => Option[A])
     (implicit
@@ -261,7 +261,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     }
   }
 
-  def unifySimpleBranchesHole[F[_], A]
+  def unifySimpleBranchesHole[F[_] <: ACopK, A]
     (src: A, left: FreeQS, right: FreeQS)
     (rebase: FreeQS => A => Option[A])
     (implicit
@@ -368,7 +368,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     }
   }
 
-  def unifySimpleBranches[F[_], A]
+  def unifySimpleBranches[F[_] <: ACopK, A]
     (src: A, left: FreeQS, right: FreeQS, func: JoinFunc)
     (rebase: FreeQS => A => Option[A])
     (implicit
@@ -384,7 +384,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
       branchSide.remap(func).flatMap(branchSide.combine)
   }
 
-  def unifySimpleBranchesCoEnv[F[_], A]
+  def unifySimpleBranchesCoEnv[F[_] <: ACopK, A]
     (src: A, l: FreeQS, r: FreeQS, combine: JoinFunc)
     (rebase: FreeQS => A => Option[A])
     (implicit
@@ -395,7 +395,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
 
   // FIXME: This really needs to ensure that the condition is that of an
   //        autojoin, otherwise it’ll elide things that are truly meaningful.
-  def elideNopJoin[F[_], A]
+  def elideNopJoin[F[_] <: ACopK, A]
     (rebase: FreeQS => A => Option[A])
     (implicit QC: QScriptCore :<<: F, FI: Injectable.Aux[F, QScriptTotal])
       : ThetaJoin[A] => Option[F[A]] = {
