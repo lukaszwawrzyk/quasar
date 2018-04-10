@@ -25,9 +25,8 @@ import matryoshka._
 import matryoshka.implicits._
 import scalaz._
 import scalaz.syntax.all._
-import iotaz.{TNilK, CopK}
-import iotaz.TListK.:::
-import iotaz.TListK.Op.Concat
+import iotaz.CopK
+import iotaz.TNilK
 import slamdata.Predef.Int
 
 sealed trait Unirewrite[T[_[_]], C[_] <: ACopK] {
@@ -35,7 +34,8 @@ sealed trait Unirewrite[T[_[_]], C[_] <: ACopK] {
 }
 
 private[qscript] trait UnirewriteLowPriorityImplicits {
-  private type C0[C[_] <: ACopK, A] = CopK[Concat[Const[ShiftedRead[ADir], ?] ::: TNilK, C[_]#L], A]
+  // TODO make it real
+  private type C0[C[x] <: CopK[_, x], A] = CopK[TNilK, A]
 
   implicit def fileRead[T[_[_]]: BirecursiveT, C[_] <: ACopK](
     implicit
