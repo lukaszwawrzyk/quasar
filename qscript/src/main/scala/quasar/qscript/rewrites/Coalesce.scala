@@ -37,7 +37,7 @@ import iotaz.{CopK, TListK}
 /** Rewrites adjacent nodes. */
 trait Coalesce[IN[_]] {
   type IT[F[_]]
-  type OUT[A]
+  type OUT[A] <: ACopK
 
   /** Coalesce for types containing QScriptCore. */
   protected[qscript] def coalesceQC[F[_]: Functor]
@@ -93,21 +93,21 @@ trait Coalesce[IN[_]] {
 trait CoalesceInstances {
   def coalesce[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] = new CoalesceT[T]
 
-  implicit def qscriptCore[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT, G[_]]
+  implicit def qscriptCore[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT, G[_] <: ACopK]
     (implicit QC: QScriptCore[T, ?] :<<: G)
       : Coalesce.Aux[T, QScriptCore[T, ?], G] =
     coalesce[T].qscriptCore[G]
 
-  implicit def projectBucket[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT, F[_]]
+  implicit def projectBucket[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT, F[_] <: ACopK]
       : Coalesce.Aux[T, ProjectBucket[T, ?], F] =
     coalesce[T].projectBucket[F]
 
-  implicit def thetaJoin[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT, G[_]]
+  implicit def thetaJoin[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT, G[_] <: ACopK]
     (implicit TJ: ThetaJoin[T, ?] :<<: G)
       : Coalesce.Aux[T, ThetaJoin[T, ?], G] =
     coalesce[T].thetaJoin[G]
 
-  implicit def equiJoin[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT, G[_]]
+  implicit def equiJoin[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT, G[_] <: ACopK]
     (implicit EJ: EquiJoin[T, ?] :<<: G)
       : Coalesce.Aux[T, EquiJoin[T, ?], G] =
     coalesce[T].equiJoin[G]
@@ -116,7 +116,7 @@ trait CoalesceInstances {
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def coalesceCopK[T[_[_]], X <: TListK, I[_]]: Coalesce.Aux[T, CopK[X, ?], I] = null
 
-  implicit def coproduct[T[_[_]], G[_], H[_], I[_]]
+  implicit def coproduct[T[_[_]], G[_], H[_], I[_] <: ACopK]
     (implicit G: Coalesce.Aux[T, G, I],
               H: Coalesce.Aux[T, H, I])
       : Coalesce.Aux[T, Coproduct[G, H, ?], I] =
@@ -145,7 +145,7 @@ trait CoalesceInstances {
         _.run.fold(G.coalesceTJ(FToOut), H.coalesceTJ(FToOut))
     }
 
-  def default[T[_[_]], IN[_], G[_]]: Coalesce.Aux[T, IN, G] =
+  def default[T[_[_]], IN[_], G[_] <: ACopK]: Coalesce.Aux[T, IN, G] =
     new Coalesce[IN] {
       type IT[F[_]] = T[F]
       type OUT[A] = G[A]
@@ -171,13 +171,13 @@ trait CoalesceInstances {
         κ(None)
     }
 
-  implicit def deadEnd[T[_[_]], OUT[_]]: Coalesce.Aux[T, Const[DeadEnd, ?], OUT] =
+  implicit def deadEnd[T[_[_]], OUT[_] <: ACopK]: Coalesce.Aux[T, Const[DeadEnd, ?], OUT] =
     default
 
-  implicit def read[T[_[_]], OUT[_], A]: Coalesce.Aux[T, Const[Read[A], ?], OUT] =
+  implicit def read[T[_[_]], OUT[_] <: ACopK, A]: Coalesce.Aux[T, Const[Read[A], ?], OUT] =
     default
 
-  implicit def shiftedRead[T[_[_]], OUT[_], A]: Coalesce.Aux[T, Const[ShiftedRead[A], ?], OUT] =
+  implicit def shiftedRead[T[_[_]], OUT[_] <: ACopK, A]: Coalesce.Aux[T, Const[ShiftedRead[A], ?], OUT] =
     default
 }
 
@@ -242,7 +242,7 @@ class CoalesceT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TType
   private def eliminateRightSideProjUnary(fm: FreeMap): Option[FreeMap] =
     eliminateRightSideProj(fm, SrcHole)
 
-  def qscriptCore[G[_]](implicit QC: QScriptCore :<<: G): Coalesce.Aux[T, QScriptCore, G] =
+  def qscriptCore[G[_] <: ACopK](implicit QC: QScriptCore :<<: G): Coalesce.Aux[T, QScriptCore, G] =
     new Coalesce[QScriptCore] {
       type IT[F[_]] = T[F]
       type OUT[A] = G[A]
@@ -547,7 +547,7 @@ class CoalesceT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TType
       }
     }
 
-  def projectBucket[F[_]]: Coalesce.Aux[T, ProjectBucket, F] =
+  def projectBucket[F[_] <: ACopK]: Coalesce.Aux[T, ProjectBucket, F] =
     new Coalesce[ProjectBucket] {
       type IT[F[_]] = T[F]
       type OUT[A] = F[A]
@@ -583,7 +583,7 @@ class CoalesceT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TType
         κ(None)
     }
 
-  def thetaJoin[G[_]](implicit TJ: ThetaJoin :<<: G): Coalesce.Aux[T, ThetaJoin, G] =
+  def thetaJoin[G[_] <: ACopK](implicit TJ: ThetaJoin :<<: G): Coalesce.Aux[T, ThetaJoin, G] =
     new Coalesce[ThetaJoin] {
       type IT[F[_]] = T[F]
       type OUT[A] = G[A]
@@ -621,7 +621,7 @@ class CoalesceT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TType
           TJ.inj(ThetaJoin(tj.src, l, r, tj.on, tj.f, tj.combine)))
     }
 
-  def equiJoin[G[_]](implicit EJ: EquiJoin :<<: G): Coalesce.Aux[T, EquiJoin, G] =
+  def equiJoin[G[_] <: ACopK](implicit EJ: EquiJoin :<<: G): Coalesce.Aux[T, EquiJoin, G] =
     new Coalesce[EquiJoin] {
       type IT[F[_]] = T[F]
       type OUT[A] = G[A]
