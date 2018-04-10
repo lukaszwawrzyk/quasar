@@ -25,52 +25,51 @@ import matryoshka._
 import matryoshka.implicits._
 import scalaz._
 import scalaz.syntax.all._
-import iotaz.CopK
-import iotaz.TNilK
+import iotaz.{CopK, TListK}
+import iotaz.TListK.:::
 import slamdata.Predef.Int
 
-sealed trait Unirewrite[T[_[_]], C[_] <: ACopK] {
-  def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[C]]
+sealed trait Unirewrite[T[_[_]], L <: TListK] {
+  def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[CopK[L, ?]]]
 }
 
 private[qscript] trait UnirewriteLowPriorityImplicits {
-  // TODO make it real
-  private type C0[C[x] <: CopK[_, x], A] = CopK[TNilK, A]
+  private type C0[L <: TListK, A] = CopK[Const[ShiftedRead[ADir], ?] ::: L, A]
 
-  implicit def fileRead[T[_[_]]: BirecursiveT, C[_] <: ACopK](
+  implicit def fileRead[T[_[_]]: BirecursiveT, L <: TListK](
     implicit
-      FC: Functor[C],
-      TC0: Traverse[C0[C, ?]],
-      J: SimplifyJoin.Aux[T, QScriptShiftRead[T, ?], C0[C, ?]],
+//      FC: Functor[CopK[L, ?]],
+      TC0: Traverse[C0[L, ?]],
+      J: SimplifyJoin.Aux[T, QScriptShiftRead[T, ?], C0[L, ?]],
       C: Coalesce.Aux[T, QScriptShiftRead[T, ?], QScriptShiftRead[T, ?]],
       N: Normalizable[QScriptShiftRead[T, ?]],
-      E: ExpandDirs.Aux[T, C0[C, ?], C]): Unirewrite[T, C] = new Unirewrite[T, C] {
+      E: ExpandDirs.Aux[T, C0[L, ?], CopK[L, ?]]): Unirewrite[T, L] = new Unirewrite[T, L] {
 
-    def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[C]] = { qs =>
-      r.simplifyJoinOnShiftRead[QScriptRead[T, ?], QScriptShiftRead[T, ?], C0[C, ?]]
+    def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[CopK[L, ?]]] = { qs =>
+      r.simplifyJoinOnShiftRead[QScriptRead[T, ?], QScriptShiftRead[T, ?], C0[L, ?]]
         .apply(qs)
-        .transCataM(E.expandDirs(reflNT[C], lc))
+        .transCataM(E.expandDirs(reflNT[CopK[L, ?]], lc))
     }
   }
 }
 
 object Unirewrite extends UnirewriteLowPriorityImplicits {
 
-  implicit def dirRead[T[_[_]], C[_] <: ACopK](
+  implicit def dirRead[T[_[_]], L <: TListK](
     implicit
-      D: Const[ShiftedRead[ADir], ?] :<<: C,
-      T: Traverse[C],
-      QC: QScriptCore[T, ?] :<<: C,
-      TJ: ThetaJoin[T, ?] :<<: C,
-      GI: Injectable.Aux[C, QScriptTotal[T, ?]],
-      S: ShiftReadDir.Aux[T, QScriptRead[T, ?], C],
-      C: Coalesce.Aux[T, C, C],
-      N: Normalizable[C]): Unirewrite[T, C] = new Unirewrite[T, C] {
+      D: Const[ShiftedRead[ADir], ?] :<<: CopK[L, ?],
+      T: Traverse[CopK[L, ?]],
+      QC: QScriptCore[T, ?] :<<: CopK[L, ?],
+      TJ: ThetaJoin[T, ?] :<<: CopK[L, ?],
+      GI: Injectable.Aux[CopK[L, ?], QScriptTotal[T, ?]],
+      S: ShiftReadDir.Aux[T, QScriptRead[T, ?], CopK[L, ?]],
+      C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]],
+      N: Normalizable[CopK[L, ?]]): Unirewrite[T, L] = new Unirewrite[T, L] {
 
-    def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[C]] =
-      r.shiftReadDir[QScriptRead[T, ?], C] andThen (_.point[F])
+    def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[CopK[L, ?]]] =
+      r.shiftReadDir[QScriptRead[T, ?], CopK[L, ?]] andThen (_.point[F])
   }
 
-  def apply[T[_[_]], C[_] <: ACopK, F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F])(implicit U: Unirewrite[T, C]) =
+  def apply[T[_[_]], L <: TListK, F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F])(implicit U: Unirewrite[T, L]) =
     U(r, lc)
 }

@@ -18,15 +18,16 @@ package quasar.qscript.rewrites
 
 import slamdata.Predef._
 import quasar.contrib.matryoshka._
-import quasar.fp._
+import quasar.fp.{copkTraverse => _, _}
 import quasar.fp.ski._
 import quasar.qscript._
 
 import matryoshka._
 import scalaz._
+import iotaz.{CopK, TListK}
 
-sealed trait Unicoalesce[T[_[_]], C[_] <: ACopK] {
-  def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]): C[T[C]] => Option[C[T[C]]]
+sealed trait Unicoalesce[T[_[_]], L <: TListK] {
+  def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]): CopK[L, T[CopK[L, ?]]] => Option[CopK[L, T[CopK[L, ?]]]]
 }
 
 object Unicoalesce {
@@ -36,30 +37,30 @@ object Unicoalesce {
    * dependencies in a single implicit, which can then be passed
    * along as a value (e.g. in BackendModule).
    */
-  trait Capture[T[_[_]], C[_] <: ACopK] {
-    val C: Coalesce.Aux[T, C, C]
-    val F: Functor[C]
-    val QC: UnicoalesceQC[T, C]
-    val SR: UnicoalesceSR[T, C]
-    val EJ: UnicoalesceEJ[T, C]
-    val TJ: UnicoalesceTJ[T, C]
-    val N: Normalizable[C]
+  trait Capture[T[_[_]], L <: TListK] {
+    val C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]]
+    val F: Functor[CopK[L, ?]]
+    val QC: UnicoalesceQC[T, L]
+    val SR: UnicoalesceSR[T, L]
+    val EJ: UnicoalesceEJ[T, L]
+    val TJ: UnicoalesceTJ[T, L]
+    val N: Normalizable[CopK[L, ?]]
 
-    def run: C[T[C]] => C[T[C]] =
-      apply[T, C](C, F, QC, SR, EJ, TJ, N)
+    def run: CopK[L, T[CopK[L, ?]]] => CopK[L, T[CopK[L, ?]]] =
+      apply[T, L](C, F, QC, SR, EJ, TJ, N)
   }
 
   object Capture {
 
-    implicit def materialize[T[_[_]], C[_] <: ACopK](
+    implicit def materialize[T[_[_]], L <: TListK](
       implicit
-        _C: Coalesce.Aux[T, C, C],
-        _F: Functor[C],
-        _QC: UnicoalesceQC[T, C],
-        _SR: UnicoalesceSR[T, C],
-        _EJ: UnicoalesceEJ[T, C],
-        _TJ: UnicoalesceTJ[T, C],
-        _N: Normalizable[C]): Capture[T, C] = new Capture[T, C] {
+        _C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]],
+        _F: Functor[CopK[L, ?]],
+        _QC: UnicoalesceQC[T, L],
+        _SR: UnicoalesceSR[T, L],
+        _EJ: UnicoalesceEJ[T, L],
+        _TJ: UnicoalesceTJ[T, L],
+        _N: Normalizable[CopK[L, ?]]): Capture[T, L] = new Capture[T, L] {
 
       val C = _C
       val F = _F
@@ -70,101 +71,101 @@ object Unicoalesce {
       val N = _N
     }
 
-    def apply[T[_[_]], C[_] <: ACopK](implicit C: Capture[T, C]) = C
+    def apply[T[_[_]], L <: TListK](implicit C: Capture[T, L]) = C
   }
 
-  def apply[T[_[_]], C[_] <: ACopK](
+  def apply[T[_[_]], L <: TListK](
     implicit
-      C: Coalesce.Aux[T, C, C],
-      F: Functor[C],
-      QC: UnicoalesceQC[T, C],
-      SR: UnicoalesceSR[T, C],
-      EJ: UnicoalesceEJ[T, C],
-      TJ: UnicoalesceTJ[T, C],
-      N: Normalizable[C]): C[T[C]] => C[T[C]] =
+      C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]],
+      F: Functor[CopK[L, ?]],
+      QC: UnicoalesceQC[T, L],
+      SR: UnicoalesceSR[T, L],
+      EJ: UnicoalesceEJ[T, L],
+      TJ: UnicoalesceTJ[T, L],
+      N: Normalizable[CopK[L, ?]]): CopK[L, T[CopK[L, ?]]] => CopK[L, T[CopK[L, ?]]] =
     repeatedly(
       applyTransforms(
         QC(C),
         SR(C),
         EJ(C),
         TJ(C),
-        N.normalizeF(_: C[T[C]])))
+        N.normalizeF(_: CopK[L, T[CopK[L, ?]]])))
 }
 
-sealed trait UnicoalesceQC[T[_[_]], C[_] <: ACopK] extends Unicoalesce[T, C]
+sealed trait UnicoalesceQC[T[_[_]], L <: TListK] extends Unicoalesce[T, L]
 
 private[qscript] trait UnicoalesceQCLowPriorityImplicits {
-  implicit def default[T[_[_]], C[_] <: ACopK]: UnicoalesceQC[T, C] = new UnicoalesceQC[T, C] {
-    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) = κ(None)
+  implicit def default[T[_[_]], L <: TListK]: UnicoalesceQC[T, L] = new UnicoalesceQC[T, L] {
+    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
   }
 }
 
 object UnicoalesceQC extends UnicoalesceQCLowPriorityImplicits {
 
-  implicit def member[T[_[_]], C[_] <: ACopK](
+  implicit def member[T[_[_]], L <: TListK](
     implicit
-      QC: QScriptCore[T, ?] :<<: C): UnicoalesceQC[T, C] = new UnicoalesceQC[T, C] {
+      QC: QScriptCore[T, ?] :<<: CopK[L, ?]): UnicoalesceQC[T, L] = new UnicoalesceQC[T, L] {
 
-    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) =
-      C.coalesceQC[C](idPrism)
+    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
+      C.coalesceQC[CopK[L, ?]](idPrism)
   }
 }
 
-sealed trait UnicoalesceSR[T[_[_]], C[_] <: ACopK] extends Unicoalesce[T, C]
+sealed trait UnicoalesceSR[T[_[_]], L <: TListK] extends Unicoalesce[T, L]
 
 private[qscript] trait UnicoalesceSRLowPriorityImplicits {
-  implicit def default[T[_[_]], C[_] <: ACopK]: UnicoalesceSR[T, C] = new UnicoalesceSR[T, C] {
-    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) = κ(None)
+  implicit def default[T[_[_]], L <: TListK]: UnicoalesceSR[T, L] = new UnicoalesceSR[T, L] {
+    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
   }
 }
 
 object UnicoalesceSR extends UnicoalesceSRLowPriorityImplicits {
 
   // TODO the A might not infer here
-  implicit def member[T[_[_]], A, C[_] <: ACopK](
+  implicit def member[T[_[_]], A, L <: TListK](
     implicit
-      QC: QScriptCore[T, ?] :<<: C,
-      SR: Const[ShiftedRead[A], ?] :<<: C): UnicoalesceSR[T, C] = new UnicoalesceSR[T, C] {
+      QC: QScriptCore[T, ?] :<<: CopK[L, ?],
+      SR: Const[ShiftedRead[A], ?] :<<: CopK[L, ?]): UnicoalesceSR[T, L] = new UnicoalesceSR[T, L] {
 
-    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) =
-      C.coalesceSR[C, A](idPrism)
+    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
+      C.coalesceSR[CopK[L, ?], A](idPrism)
   }
 }
 
-sealed trait UnicoalesceEJ[T[_[_]], C[_] <: ACopK] extends Unicoalesce[T, C]
+sealed trait UnicoalesceEJ[T[_[_]], L <: TListK] extends Unicoalesce[T, L]
 
 private[qscript] trait UnicoalesceEJLowPriorityImplicits {
-  implicit def default[T[_[_]], C[_] <: ACopK]: UnicoalesceEJ[T, C] = new UnicoalesceEJ[T, C] {
-    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) = κ(None)
+  implicit def default[T[_[_]], L <: TListK]: UnicoalesceEJ[T, L] = new UnicoalesceEJ[T, L] {
+    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
   }
 }
 
 object UnicoalesceEJ extends UnicoalesceEJLowPriorityImplicits {
 
-  implicit def member[T[_[_]], C[_] <: ACopK](
+  implicit def member[T[_[_]], L <: TListK](
     implicit
-      QC: EquiJoin[T, ?] :<<: C): UnicoalesceEJ[T, C] = new UnicoalesceEJ[T, C] {
+      QC: EquiJoin[T, ?] :<<: CopK[L, ?]): UnicoalesceEJ[T, L] = new UnicoalesceEJ[T, L] {
 
-    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) =
-      C.coalesceEJ[C](idPrism.get)
+    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
+      C.coalesceEJ[CopK[L, ?]](idPrism.get)
   }
 }
 
-sealed trait UnicoalesceTJ[T[_[_]], C[_] <: ACopK] extends Unicoalesce[T, C]
+sealed trait UnicoalesceTJ[T[_[_]], L <: TListK] extends Unicoalesce[T, L]
 
 private[qscript] trait UnicoalesceTJLowPriorityImplicits {
-  implicit def default[T[_[_]], C[_] <: ACopK]: UnicoalesceTJ[T, C] = new UnicoalesceTJ[T, C] {
-    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) = κ(None)
+  implicit def default[T[_[_]], L <: TListK]: UnicoalesceTJ[T, L] = new UnicoalesceTJ[T, L] {
+    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
   }
 }
 
 object UnicoalesceTJ extends UnicoalesceTJLowPriorityImplicits {
 
-  implicit def member[T[_[_]], C[_] <: ACopK](
+  implicit def member[T[_[_]], L <: TListK](
     implicit
-      QC: ThetaJoin[T, ?] :<<: C): UnicoalesceTJ[T, C] = new UnicoalesceTJ[T, C] {
+      QC: ThetaJoin[T, ?] :<<: CopK[L, ?]): UnicoalesceTJ[T, L] = new UnicoalesceTJ[T, L] {
 
-    def apply(C: Coalesce.Aux[T, C, C])(implicit F: Functor[C]) =
-      C.coalesceTJ[C](idPrism.get)
+    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
+      C.coalesceTJ[CopK[L, ?]](idPrism.get)
   }
 }

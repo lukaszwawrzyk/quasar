@@ -27,7 +27,6 @@ import quasar.contrib.pathy._
 import quasar.contrib.matryoshka._
 import quasar.contrib.scalaz._, eitherT._
 import quasar.contrib.scalaz.concurrent._
-import quasar.fp._
 import quasar.fp.free._
 import quasar.fp.numeric.{Natural, Positive}
 import quasar.frontend.logicalplan.LogicalPlan
@@ -44,12 +43,14 @@ import matryoshka.data._
 import matryoshka.implicits._
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
-import iotaz.CopK
+import iotaz.{CopK,TListK}
 
 
 trait BackendModule {
   import BackendDef.{DefErrT, DefinitionResult}
   import BackendModule._
+
+  type QSM[T[_[_]], A] = CopK[QS[T], A]
 
   type ConfiguredT[F[_], A] = Kleisli[F, Config, A]
   type Configured[A]        = ConfiguredT[M, A]
@@ -160,13 +161,16 @@ trait BackendModule {
     for {
       qs <- MonadFsErr[M].unattempt(
         LPtoQS[T].apply[X](lp).leftMap(qscriptPlanningFailed(_)).run.eval(0))
-      _ <- logPhase[M](PhaseResult.tree("QScript (Educated)", qs))
+      _ <- logPhase[M]{
+        import quasar.fp.{copKRenderTree, copkTraverse}
+        PhaseResult.tree("QScript (Educated)", qs)
+      }
 
-      shifted <- Unirewrite[T, QSM[T, ?], M](R, lc).apply(qs)
+      shifted <- Unirewrite[T, QS[T], M](R, lc).apply(qs)
       _ <- logPhase[M](PhaseResult.treeAndCode("QScript (ShiftRead)", shifted))
 
       optimized =
-        shifted.transHylo(optimize[T], Unicoalesce.Capture[T, QSM[T, ?]].run)
+        shifted.transHylo(optimize[T], Unicoalesce.Capture[T, QS[T]].run)
 
       _ <- logPhase[M](PhaseResult.treeAndCode("QScript (Optimized)", optimized))
     } yield optimized
@@ -190,7 +194,7 @@ trait BackendModule {
 
   // everything abstract below this line
 
-  type QSM[T[_[_]], A] <: CopK[_, A]
+  type QS[T[_[_]]] <: TListK
 
   implicit def qScriptToQScriptTotal[T[_[_]]]: Injectable.Aux[QSM[T, ?], QScriptTotal[T, ?]]
 
@@ -202,8 +206,8 @@ trait BackendModule {
   def ExtractPathQSM[T[_[_]]: RecursiveT]: ExtractPath[QSM[T, ?], APath]
   def QSCoreInject[T[_[_]]]: QScriptCore[T, ?] :<: QSM[T, ?]
   def MonadM: Monad[M]
-  def UnirewriteT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unirewrite[T, QSM[T, ?]]
-  def UnicoalesceCap[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unicoalesce.Capture[T, QSM[T, ?]]
+  def UnirewriteT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unirewrite[T, QS[T]]
+  def UnicoalesceCap[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unicoalesce.Capture[T, QS[T]]
 
   def optimize[T[_[_]]: BirecursiveT: EqualT: ShowT]: QSM[T, T[QSM[T, ?]]] => QSM[T, T[QSM[T, ?]]]
   type Config
