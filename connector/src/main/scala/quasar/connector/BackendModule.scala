@@ -44,12 +44,12 @@ import matryoshka.data._
 import matryoshka.implicits._
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
+import iotaz.CopK
+
 
 trait BackendModule {
   import BackendDef.{DefErrT, DefinitionResult}
   import BackendModule._
-
-  type QSM[T[_[_]], A] = QS[T]#M[A]
 
   type ConfiguredT[F[_], A] = Kleisli[F, Config, A]
   type Configured[A]        = ConfiguredT[M, A]
@@ -162,11 +162,11 @@ trait BackendModule {
         LPtoQS[T].apply[X](lp).leftMap(qscriptPlanningFailed(_)).run.eval(0))
       _ <- logPhase[M](PhaseResult.tree("QScript (Educated)", qs))
 
-      shifted <- Unirewrite[T, QS[T], M](R, lc).apply(qs)
+      shifted <- Unirewrite[T, QSM[T, ?], M](R, lc).apply(qs)
       _ <- logPhase[M](PhaseResult.treeAndCode("QScript (ShiftRead)", shifted))
 
       optimized =
-        shifted.transHylo(optimize[T], Unicoalesce.Capture[T, QS[T]].run)
+        shifted.transHylo(optimize[T], Unicoalesce.Capture[T, QSM[T, ?]].run)
 
       _ <- logPhase[M](PhaseResult.treeAndCode("QScript (Optimized)", optimized))
     } yield optimized
@@ -190,7 +190,7 @@ trait BackendModule {
 
   // everything abstract below this line
 
-  type QS[T[_[_]]] <: CoM
+  type QSM[T[_[_]], A] <: CopK[_, A]
 
   implicit def qScriptToQScriptTotal[T[_[_]]]: Injectable.Aux[QSM[T, ?], QScriptTotal[T, ?]]
 
@@ -202,8 +202,8 @@ trait BackendModule {
   def ExtractPathQSM[T[_[_]]: RecursiveT]: ExtractPath[QSM[T, ?], APath]
   def QSCoreInject[T[_[_]]]: QScriptCore[T, ?] :<: QSM[T, ?]
   def MonadM: Monad[M]
-  def UnirewriteT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unirewrite[T, QS[T]]
-  def UnicoalesceCap[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unicoalesce.Capture[T, QS[T]]
+  def UnirewriteT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unirewrite[T, QSM[T, ?]]
+  def UnicoalesceCap[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unicoalesce.Capture[T, QSM[T, ?]]
 
   def optimize[T[_[_]]: BirecursiveT: EqualT: ShowT]: QSM[T, T[QSM[T, ?]]] => QSM[T, T[QSM[T, ?]]]
   type Config
