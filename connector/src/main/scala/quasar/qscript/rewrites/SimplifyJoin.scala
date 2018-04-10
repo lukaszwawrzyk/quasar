@@ -23,6 +23,7 @@ import quasar.qscript._
 import matryoshka.{Hole => _, _}
 import matryoshka.implicits._
 import scalaz._, Scalaz._
+import iotaz.{CopK, TListK}
 
 /** Replaces [[ThetaJoin]] with [[EquiJoin]], which is often more feasible for
   * connectors to implement. It potentially adds a [[Filter]] iff there are
@@ -155,6 +156,10 @@ object SimplifyJoin {
           ej.f,
           ej.combine)))
     }
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkSimplifyJson[T[_[_]], X <: TListK, F[_]]: SimplifyJoin.Aux[T, CopK[X, ?], F] = null
 
   implicit def coproduct[T[_[_]], F[_], I[_], J[_]]
     (implicit I: SimplifyJoin.Aux[T, I, F], J: SimplifyJoin.Aux[T, J, F])

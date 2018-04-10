@@ -27,7 +27,7 @@ import matryoshka.implicits._
 import matryoshka.patterns.CoEnv
 import scalaz._, Scalaz._
 import ShiftRead._
-import iotaz.{ CopK, TListK }
+import iotaz.{CopK, TListK}
 
 /** This optional transformation changes the semantics of [[Read]]. The default
   * semantics return a single value, whereas the transformed version has an
