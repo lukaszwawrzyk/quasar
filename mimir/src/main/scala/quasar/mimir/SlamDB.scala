@@ -72,13 +72,13 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
     mimir.qScriptToQScriptTotal[T]
 
   implicit def qScriptCoreToQScript[T[_[_]]]: Injectable.Aux[QScriptCore[T, ?], QSM[T, ?]] =
-    Injectable.inject[QScriptCore[T, ?], QSM[T, ?]]
+    Injectable.injectCopK[QScriptCore[T, ?], QSM[T, ?]]
 
   implicit def equiJoinToQScript[T[_[_]]]: Injectable.Aux[EquiJoin[T, ?], QSM[T, ?]] =
-    Injectable.inject[EquiJoin[T, ?], QSM[T, ?]]
+    Injectable.injectCopK[EquiJoin[T, ?], QSM[T, ?]]
 
   implicit def shiftedReadToQScript[T[_[_]]]: Injectable.Aux[Const[ShiftedRead[AFile], ?], QSM[T, ?]] =
-    Injectable.inject[Const[ShiftedRead[AFile], ?], QSM[T, ?]]
+    Injectable.injectCopK[Const[ShiftedRead[AFile], ?], QSM[T, ?]]
 
   type Repr = MimirRepr
   type M[A] = CakeM[A]
@@ -92,7 +92,7 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
   def TraverseQSM[T[_[_]]] = Traverse[QSM[T, ?]]
   def DelayRenderTreeQSM[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] = implicitly[Delay[RenderTree, QSM[T, ?]]]
   def ExtractPathQSM[T[_[_]]: RecursiveT] = ExtractPath[QSM[T, ?], APath]
-  def QSCoreInject[T[_[_]]] = implicitly[QScriptCore[T, ?] :<: QSM[T, ?]]
+  def QSCoreInject[T[_[_]]] = implicitly[QScriptCore[T, ?] :<<: QSM[T, ?]]
   def MonadM = Monad[M]
   def UnirewriteT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] = implicitly[Unirewrite[T, QS[T]]]
   def UnicoalesceCap[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] = Unicoalesce.Capture[T, QS[T]]

@@ -59,10 +59,10 @@ class Optimize[T[_[_]]: BirecursiveT: EqualT: ShowT] extends TTypes[T] {
   /** Should only be applied after all other QScript transformations. This gives
     * the final, optimized QScript for conversion.
     */
-  def optimize[F[_], G[_]: Functor](FtoG: F ~> G)(
+  def optimize[F[_] <: ACopK, G[_]: Functor](FtoG: F ~> G)(
     implicit
-      QCF: QScriptCore :<: F,
-      QCG: QScriptCore :<: G)
+      QCF: QScriptCore :<<: F,
+      QCG: QScriptCore :<<: G)
       : F[T[G]] => F[T[G]] =
       liftFF[QScriptCore, F, T[G]](
         repeatedly(applyTransforms(subsetBeforeMap[F, G](FtoG), filterBeforeUnion[G])))

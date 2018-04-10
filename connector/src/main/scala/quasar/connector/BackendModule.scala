@@ -27,6 +27,7 @@ import quasar.contrib.pathy._
 import quasar.contrib.matryoshka._
 import quasar.contrib.scalaz._, eitherT._
 import quasar.contrib.scalaz.concurrent._
+import quasar.fp.:<<:
 import quasar.fp.free._
 import quasar.fp.numeric.{Natural, Positive}
 import quasar.frontend.logicalplan.LogicalPlan
@@ -204,7 +205,7 @@ trait BackendModule {
   def FunctorQSM[T[_[_]]]: Functor[QSM[T, ?]]
   def DelayRenderTreeQSM[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Delay[RenderTree, QSM[T, ?]]
   def ExtractPathQSM[T[_[_]]: RecursiveT]: ExtractPath[QSM[T, ?], APath]
-  def QSCoreInject[T[_[_]]]: QScriptCore[T, ?] :<: QSM[T, ?]
+  def QSCoreInject[T[_[_]]]: QScriptCore[T, ?] :<<: QSM[T, ?]
   def MonadM: Monad[M]
   def UnirewriteT[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unirewrite[T, QS[T]]
   def UnicoalesceCap[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT]: Unicoalesce.Capture[T, QS[T]]
