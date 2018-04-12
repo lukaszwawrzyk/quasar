@@ -30,9 +30,9 @@ class Optimize[T[_[_]]: BirecursiveT: EqualT: ShowT] extends TTypes[T] {
 
   /** Pull more work to _after_ count operations, limiting the dataset. */
   // TODO: we should be able to pull _most_ of a Reduce repair function to after a Subset
-  def subsetBeforeMap[F[_], G[_]: Functor]
+  def subsetBeforeMap[F[_] <: ACopK, G[_]: Functor]
     (FtoG: F ~> G)
-    (implicit QC: QScriptCore :<: F)
+    (implicit QC: QScriptCore :<<: F)
       : QScriptCore[T[G]] => Option[QScriptCore[T[G]]] = {
     case Subset(src, from, sel, count) =>
       from.resume.swap.toOption >>= (FI project _) >>= {
@@ -43,7 +43,7 @@ class Optimize[T[_[_]]: BirecursiveT: EqualT: ShowT] extends TTypes[T] {
     case _ => None
   }
 
-  def filterBeforeUnion[F[_]: Functor](implicit QC: QScriptCore :<: F)
+  def filterBeforeUnion[F[_] <: ACopK: Functor](implicit QC: QScriptCore :<<: F)
       : QScriptCore[T[F]] => Option[QScriptCore[T[F]]] = {
     case Filter(Embed(src), fm) =>
       QC.prj(src) match {
@@ -59,7 +59,7 @@ class Optimize[T[_[_]]: BirecursiveT: EqualT: ShowT] extends TTypes[T] {
   /** Should only be applied after all other QScript transformations. This gives
     * the final, optimized QScript for conversion.
     */
-  def optimize[F[_] <: ACopK, G[_]: Functor](FtoG: F ~> G)(
+  def optimize[F[_] <: ACopK, G[_] <: ACopK: Functor](FtoG: F ~> G)(
     implicit
       QCF: QScriptCore :<<: F,
       QCG: QScriptCore :<<: G)

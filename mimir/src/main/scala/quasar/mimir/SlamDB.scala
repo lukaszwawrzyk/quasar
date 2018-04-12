@@ -52,6 +52,7 @@ import pathy.Path._
 
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
+import iotaz.CopK
 
 import scala.Predef.implicitly
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -147,24 +148,17 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
 
     def shiftedReadPlanner = new ShiftedReadPlanner[T, Backend](liftErr)
 
-    lazy val planQST: AlgebraM[Backend, QScriptTotal[T, ?], Repr] =
-      _.run.fold(
-        qScriptCorePlanner.plan(planQST),
-        _.run.fold(
-          _ => ???,   // ProjectBucket
-          _.run.fold(
-            _ => ???,   // ThetaJoin
-            _.run.fold(
-              equiJoinPlanner.plan(planQST),
-              _.run.fold(
-                _ => ???,    // ShiftedRead[ADir]
-                _.run.fold(
-                  shiftedReadPlanner.plan,
-                  _.run.fold(
-                    _ => ???,   // Read[ADir]
-                    _.run.fold(
-                      _ => ???,   // Read[AFile]
-                      _ => ???))))))))    // DeadEnd
+    lazy val planQST: AlgebraM[Backend, QScriptTotal[T, ?], Repr] = {
+      val QScriptCore = CopK.Inject[QScriptCore[T, ?], QScriptTotal[T, ?]]
+      val EquiJoin = CopK.Inject[EquiJoin[T, ?], QScriptTotal[T, ?]]
+      val ShiftedRead = CopK.Inject[Const[ShiftedRead[AFile], ?], QScriptTotal[T, ?]]
+      _ match {
+        case QScriptCore(value) => qScriptCorePlanner.plan(planQST)(value)
+        case EquiJoin(value) => equiJoinPlanner.plan(planQST)(value)
+        case ShiftedRead(value) => shiftedReadPlanner.plan(value)
+        case _ => ???
+      }
+    }
 
     def planQSM(in: QSM[T, Repr]): Backend[Repr] =
       in.run.fold(qScriptCorePlanner.plan(planQST), _.run.fold(
