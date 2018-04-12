@@ -416,7 +416,7 @@ lazy val qscriptDefinition =
   */
 lazy val connector = project
   .settings(name := "quasar-connector-internal")
-  .dependsOn(qscriptDefinition)
+  .dependsOn(qscriptDefinition % BothScopes)
   .settings(commonSettings)
   .settings(publishTestsSettings)
   .settings(targetSettings)
