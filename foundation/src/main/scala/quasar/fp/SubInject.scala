@@ -105,7 +105,7 @@ package iotaz.internal {
       q"""
        _root_.quasar.qscript.Injectable.make[$Inner, $Outer](
          new $NaturalTransformation[$Inner, $Outer] {
-           @SuppressWarnings(Array("org.wartremover.warts.Throw"))
+           @java.lang.SuppressWarnings(scala.Array("org.wartremover.warts.Throw"))
            override def apply[$A]($fa: $Inner[$A]): $Outer[$A] = {
              $fa.index match {
                case ..$injectCases
@@ -115,7 +115,7 @@ package iotaz.internal {
            }
          },
          new $NaturalTransformation[$Outer, $projectReturnType] {
-           @SuppressWarnings(Array("org.wartremover.warts.Throw"))
+           @java.lang.SuppressWarnings(scala.Array("org.wartremover.warts.Throw"))
            override def apply[$A]($fa: $Outer[$A]): scala.Option[$Inner[$A]] = {
              $fa.index match {
                case ..$projectCases

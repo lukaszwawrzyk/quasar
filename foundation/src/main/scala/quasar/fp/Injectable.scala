@@ -34,14 +34,16 @@ trait Injectable[IN[_]] {
   def project: OUT ~> λ[A => Option[IN[A]]]
 }
 
-object Injectable {
-  type Aux[IN[_], F[_]] = Injectable[IN] { type OUT[A] = F[A] }
+object Injectable extends InjectableInstances {
 
-  def make[F[_], G[_]](inj: F ~> G, prj: G ~> λ[A => Option[F[A]]]): Aux[F, G] = new Injectable[F] {
-    type OUT[A] = G[A]
-    val inject  = inj
-    val project = prj
-  }
+  def id[F[_]]: Aux[F, F] = make(
+    NaturalTransformation.refl[F],
+    λ[F ~> λ[A => Option[F[A]]]](Some(_))
+  )
+
+}
+
+sealed trait InjectableInstances extends InjectableInstances0 {
 
   /** Note: you'd like this to be implicit, but that makes implicit search
     * quadratic, so instead this is provided so that you can manually construct
@@ -56,14 +58,26 @@ object Injectable {
     )
   )
 
-  def id[F[_]]: Aux[F, F] = make(
-    NaturalTransformation.refl[F],
-    λ[F ~> λ[A => Option[F[A]]]](Some(_))
-  )
+  implicit def injectCopK[F[_], G[_] <: ACopK](implicit IN: F :<<: G): Aux[F, G] =
+    make[F, G](IN.inj, IN.prj)
+
+}
+
+sealed trait InjectableInstances0 extends InjectableBase {
 
   implicit def inject[F[_], G[_]](implicit IN: F :<: G): Aux[F, G] =
     make[F, G](IN, λ[G ~> λ[A => Option[F[A]]]](IN prj _))
 
-  def injectCopK[F[_], G[_] <: ACopK](implicit IN: F :<<: G): Aux[F, G] =
-    make[F, G](IN.inj, IN.prj)
+}
+
+sealed trait InjectableBase {
+
+  type Aux[IN[_], F[_]] = Injectable[IN] { type OUT[A] = F[A] }
+
+  def make[F[_], G[_]](inj: F ~> G, prj: G ~> λ[A => Option[F[A]]]): Aux[F, G] = new Injectable[F] {
+    type OUT[A] = G[A]
+    val inject  = inj
+    val project = prj
+  }
+
 }
