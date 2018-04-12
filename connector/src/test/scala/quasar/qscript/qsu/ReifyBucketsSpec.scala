@@ -22,12 +22,12 @@ import quasar.{Qspec, TreeMatchers}
 import quasar.Planner.PlannerError
 import quasar.ejson.{EJson, Fixed}
 import quasar.ejson.implicits._
-import quasar.fp.{coproductEqual, coproductShow}
+import quasar.fp.{coproductShow, copkEqual, copkTraverse, copKRenderTree}
 import quasar.qscript.{construction, ExcludeId, Hole, MapFuncsCore, ReduceFuncs, SrcHole}
 
 import matryoshka.{delayEqual, delayShow, showTShow, Embed}
 import matryoshka.data.Fix
-import matryoshka.data.free._
+import matryoshka.data.{freeEqual, freeRecursive}
 import matryoshka.patterns.CoEnv
 import scalaz.{\/, -\/, \/-, EitherT, State}
 

@@ -67,11 +67,7 @@ object ReifyAutoJoinSpecs extends Qspec with TreeMatchers with QSUTTypes[Fix] {
           fmCombiner) =>
 
           fmL must beTreeEqual(
-            func.ProjectKeyS(func.Hole, "foo"))(
-            scala.Predef.implicitly[scalaz.Equal[FreeMapA[quasar.qscript.Hole]]],
-            scala.Predef.implicitly[quasar.RenderTree[FreeMapA[quasar.qscript.Hole]]]
-          )
-
+            func.ProjectKeyS(func.Hole, "foo"))
           fmR must beTreeEqual(
             func.ProjectKeyS(func.Hole, "bar"))
 
