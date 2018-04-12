@@ -20,45 +20,45 @@ import quasar.contrib.pathy._
 import quasar.ejson, ejson.{EJson, Fixed}
 import quasar.fp._
 
+import iotaz.{TNilK,CopK}
+import iotaz.TListK.:::
+
 import scala.Predef.implicitly
+import slamdata.Predef._
 
 import matryoshka._
 import matryoshka.data.Fix
 import scalaz._
 
 trait QScriptHelpers extends TTypes[Fix] {
-  type QS[A] = (
-    QScriptCore           :\:
-    ThetaJoin             :\:
-    Const[Read[ADir], ?]  :\:
-    Const[Read[AFile], ?] :/:
-    Const[DeadEnd, ?]
-  )#M[A]
+  type QS[A] = CopK[
+    QScriptCore           :::
+    ThetaJoin             :::
+    Const[Read[ADir], ?]  :::
+    Const[Read[AFile], ?] :::
+    Const[DeadEnd, ?]     :::
+    TNilK, A]
 
-  val DE = implicitly[Const[DeadEnd, ?]     :<: QS]
-  val RD = implicitly[Const[Read[ADir], ?]  :<: QS]
-  val RF = implicitly[Const[Read[AFile], ?] :<: QS]
-  val QC = implicitly[QScriptCore           :<: QS]
-  val TJ = implicitly[ThetaJoin             :<: QS]
+  val DE = CopK.Inject[Const[DeadEnd, ?], QS]
+  val RD = implicitly[Const[Read[ADir], ?]  :<<: QS]
+  val RF = implicitly[Const[Read[AFile], ?] :<<: QS]
+  val QC = implicitly[QScriptCore           :<<: QS]
+  val TJ = implicitly[ThetaJoin             :<<: QS]
 
-  implicit val QS: Injectable.Aux[QS, QST] =
-    ::\::[QScriptCore](
-      ::\::[ThetaJoin](
-        ::\::[Const[Read[ADir], ?]](
-          ::/::[Fix, Const[Read[AFile], ?], Const[DeadEnd, ?]])))
+  implicit val QS: Injectable.Aux[QS, QST] = SubInject[QS, QST]
 
   type QST[A] = QScriptTotal[A]
   def QST[F[_]](implicit ev: Injectable.Aux[F, QST]) = ev
 
-  val DET  =            implicitly[Const[DeadEnd, ?] :<: QST]
-  val RTD  =        implicitly[Const[Read[ADir], ?]  :<: QST]
-  val RTF  =        implicitly[Const[Read[AFile], ?] :<: QST]
-  val QCT  =                  implicitly[QScriptCore :<: QST]
-  val TJT  =                    implicitly[ThetaJoin :<: QST]
-  val EJT  =                     implicitly[EquiJoin :<: QST]
-  val PBT  =                implicitly[ProjectBucket :<: QST]
-  val SRTD = implicitly[Const[ShiftedRead[ADir], ?]  :<: QST]
-  val SRTF = implicitly[Const[ShiftedRead[AFile], ?] :<: QST]
+  val DET  =            implicitly[Const[DeadEnd, ?] :<<: QST]
+  val RTD  =        implicitly[Const[Read[ADir], ?]  :<<: QST]
+  val RTF  =        implicitly[Const[Read[AFile], ?] :<<: QST]
+  val QCT  =                  implicitly[QScriptCore :<<: QST]
+  val TJT  =                    implicitly[ThetaJoin :<<: QST]
+  val EJT  =                     implicitly[EquiJoin :<<: QST]
+  val PBT  =                implicitly[ProjectBucket :<<: QST]
+  val SRTD = implicitly[Const[ShiftedRead[ADir], ?]  :<<: QST]
+  val SRTF = implicitly[Const[ShiftedRead[AFile], ?] :<<: QST]
 
   val qsdsl = construction.mkDefaults[Fix, QS]
   val qstdsl = construction.mkDefaults[Fix, QST]
