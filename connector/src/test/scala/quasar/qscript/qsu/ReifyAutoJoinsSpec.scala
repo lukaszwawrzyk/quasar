@@ -26,6 +26,8 @@ import quasar.qscript.provenance.JoinKeys
 import quasar.Planner.PlannerError
 
 import matryoshka.data.Fix
+import matryoshka.data.freeEqual
+import matryoshka.delayEqual
 import pathy.Path
 import pathy.Path.Sandboxed
 import scalaz.{EitherT, INil, Need, StateT}
@@ -65,7 +67,10 @@ object ReifyAutoJoinSpecs extends Qspec with TreeMatchers with QSUTTypes[Fix] {
           fmCombiner) =>
 
           fmL must beTreeEqual(
-            func.ProjectKeyS(func.Hole, "foo"))
+            func.ProjectKeyS(func.Hole, "foo"))(
+            scala.Predef.implicitly[scalaz.Equal[FreeMapA[quasar.qscript.Hole]]],
+            scala.Predef.implicitly[quasar.RenderTree[FreeMapA[quasar.qscript.Hole]]]
+          )
 
           fmR must beTreeEqual(
             func.ProjectKeyS(func.Hole, "bar"))
