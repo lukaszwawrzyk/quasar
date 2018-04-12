@@ -19,11 +19,11 @@ package quasar.qscript.rewrites
 import quasar.{Qspec, TreeMatchers, Type}
 import quasar.ejson.{EJson, Fixed}
 import quasar.ejson.implicits._
-import quasar.fp.coproductEqual
+import quasar.fp.{copkEqual, copkTraverse, copKRenderTree}
 import quasar.qscript.{construction, Hole, TTypes}
 
 import matryoshka._
-import matryoshka.data.Fix
+import matryoshka.data.{Fix, freeCorecursive, freeRecursive}
 import matryoshka.implicits._
 
 final class ExtractFilteringSpec extends Qspec with TTypes[Fix] with TreeMatchers {
