@@ -23,7 +23,7 @@ import quasar.fp.{copkEqual, copkTraverse, copKRenderTree}
 import quasar.qscript.{construction, Hole, TTypes}
 
 import matryoshka._
-import matryoshka.data.{Fix, freeCorecursive, freeRecursive}
+import matryoshka.data.{Fix, freeCorecursive, freeRecursive, freeEqual}
 import matryoshka.implicits._
 
 final class ExtractFilteringSpec extends Qspec with TTypes[Fix] with TreeMatchers {
