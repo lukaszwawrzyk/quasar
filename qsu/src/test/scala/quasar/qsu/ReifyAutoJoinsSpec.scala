@@ -26,6 +26,8 @@ import quasar.qscript.provenance.JoinKeys
 import quasar.fs.Planner.PlannerError
 
 import matryoshka.data.Fix
+import matryoshka.data.freeEqual
+import matryoshka.delayEqual
 import pathy.Path
 import pathy.Path.Sandboxed
 import scalaz.{EitherT, INil, Need, StateT}
