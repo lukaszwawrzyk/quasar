@@ -31,7 +31,6 @@ import quasar.{Qspec, TreeMatchers}
 
 import matryoshka._
 import matryoshka.data._
-import matryoshka.data.free._
 import pathy.Path
 import scalaz.{\/, \/-, EitherT, ICons, INil, Need, NonEmptyList => NEL, StateT, Free}
 import scalaz.Scalaz._

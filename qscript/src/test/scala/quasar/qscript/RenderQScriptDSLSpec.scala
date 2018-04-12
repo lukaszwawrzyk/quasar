@@ -50,12 +50,13 @@ class RenderQScriptDSLSpec extends quasar.Qspec with QScriptHelpers {
       |import quasar.time.TemporalPart
       |import quasar.qscript._
       |import quasar.ejson.{EJson, Fixed}
-      |import quasar.fp._
+      |import quasar.fp.{copKEqual, copKTraverse}
       |import pathy.Path._
       |import quasar.contrib.pathy._
       |import matryoshka.data.Fix
       |import scalaz.{Const, Inject, NonEmptyList}
       |import scalaz.syntax.either._
+      |import slamdata.Predef.Int
       |type QT[A] = QScriptTotal[Fix, A]
       |type DET[A] = Const[DeadEnd, A]
       |type RTD[A] = Const[Read[ADir], A]

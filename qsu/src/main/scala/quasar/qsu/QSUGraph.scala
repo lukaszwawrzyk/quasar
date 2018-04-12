@@ -380,7 +380,6 @@ object QSUGraph extends QSUGraphInstances {
     }
 
     import pathy.Path
-    import scalaz.:<:
 
     object AutoJoin2 {
       def unapply[T[_[_]]](g: QSUGraph[T]) = g.unfold match {
@@ -569,7 +568,7 @@ object QSUGraph extends QSUGraphInstances {
 
     object AutoJoin3C {
       def unapply[T[_[_]]](qgraph: QSUGraph[T])(
-          implicit IC: MapFuncCore[T, ?] :<: MapFunc[T, ?])
+          implicit IC: MapFuncCore[T, ?] :<<: MapFunc[T, ?])
           : Option[(QSUGraph[T], QSUGraph[T], QSUGraph[T], MapFuncCore[T, JoinSide3])] = qgraph match {
 
         case AutoJoin3(left, center, right, fm) =>
@@ -586,7 +585,7 @@ object QSUGraph extends QSUGraphInstances {
 
     object DataConstant {
       def unapply[T[_[_]]: BirecursiveT](qgraph: QSUGraph[T])(
-          implicit IC: MapFuncCore[T, ?] :<: MapFunc[T, ?]): Option[Data] = qgraph match {
+          implicit IC: MapFuncCore[T, ?] :<<: MapFunc[T, ?]): Option[Data] = qgraph match {
 
         case Unary(Unreferenced(), IC(MapFuncsCore.Constant(ejson))) =>
           Some(ejson.cata(Data.fromEJson))
@@ -596,7 +595,7 @@ object QSUGraph extends QSUGraphInstances {
 
     object DataConstantMapped {
       def unapply[T[_[_]]: BirecursiveT](qgraph: QSUGraph[T])(
-          implicit IC: MapFuncCore[T, ?] :<: MapFunc[T, ?]): Option[Data] = qgraph match {
+          implicit IC: MapFuncCore[T, ?] :<<: MapFunc[T, ?]): Option[Data] = qgraph match {
 
         case Map(Unreferenced(), FMFC1(MapFuncsCore.Constant(ejson))) =>
           Some(ejson.cata(Data.fromEJson))
@@ -607,7 +606,7 @@ object QSUGraph extends QSUGraphInstances {
     // TODO doesn't guarantee only one function; could be more!
     object FMFC1 {
       def unapply[T[_[_]]](fm: RecFreeMap[T])(
-          implicit IC: MapFuncCore[T, ?] :<: MapFunc[T, ?]): Option[MapFuncCore[T, Hole]] = {
+          implicit IC: MapFuncCore[T, ?] :<<: MapFunc[T, ?]): Option[MapFuncCore[T, Hole]] = {
 
         fm.linearize.resume.swap.toOption collect {
           case IC(mfc) => mfc.map(_ => SrcHole: Hole)
@@ -618,7 +617,7 @@ object QSUGraph extends QSUGraphInstances {
     object TRead {
       @SuppressWarnings(Array("org.wartremover.warts.Equals"))
       def unapply[T[_[_]]: BirecursiveT](qgraph: QSUGraph[T])(
-          implicit IC: MapFuncCore[T, ?] :<: MapFunc[T, ?]): Option[String] = qgraph match {
+          implicit IC: MapFuncCore[T, ?] :<<: MapFunc[T, ?]): Option[String] = qgraph match {
 
         case Transpose(Read(path), QSU.Retain.Values, QSU.Rotation.ShiftMap) =>
           for {
