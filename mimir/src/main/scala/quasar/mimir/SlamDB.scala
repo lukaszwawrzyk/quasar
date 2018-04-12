@@ -149,21 +149,27 @@ object Mimir extends BackendModule with Logging with DefaultAnalyzeModule {
     def shiftedReadPlanner = new ShiftedReadPlanner[T, Backend](liftErr)
 
     lazy val planQST: AlgebraM[Backend, QScriptTotal[T, ?], Repr] = {
-      val QScriptCore = CopK.Inject[QScriptCore[T, ?], QScriptTotal[T, ?]]
-      val EquiJoin = CopK.Inject[EquiJoin[T, ?], QScriptTotal[T, ?]]
+      val QScriptCore = CopK.Inject[QScriptCore[T, ?],            QScriptTotal[T, ?]]
+      val EquiJoin    = CopK.Inject[EquiJoin[T, ?],               QScriptTotal[T, ?]]
       val ShiftedRead = CopK.Inject[Const[ShiftedRead[AFile], ?], QScriptTotal[T, ?]]
       _ match {
         case QScriptCore(value) => qScriptCorePlanner.plan(planQST)(value)
-        case EquiJoin(value) => equiJoinPlanner.plan(planQST)(value)
+        case EquiJoin(value)    => equiJoinPlanner.plan(planQST)(value)
         case ShiftedRead(value) => shiftedReadPlanner.plan(value)
         case _ => ???
       }
     }
 
-    def planQSM(in: QSM[T, Repr]): Backend[Repr] =
-      in.run.fold(qScriptCorePlanner.plan(planQST), _.run.fold(
-        equiJoinPlanner.plan(planQST),
-	shiftedReadPlanner.plan))
+    def planQSM(in: QSM[T, Repr]): Backend[Repr] = {
+      val QScriptCore = CopK.Inject[QScriptCore[T, ?],            QSM[T, ?]]
+      val EquiJoin    = CopK.Inject[EquiJoin[T, ?],               QSM[T, ?]]
+      val ShiftedRead = CopK.Inject[Const[ShiftedRead[AFile], ?], QSM[T, ?]]
+      in match {
+        case QScriptCore(value) => qScriptCorePlanner.plan(planQST)(value)
+        case EquiJoin(value)    => equiJoinPlanner.plan(planQST)(value)
+        case ShiftedRead(value) => shiftedReadPlanner.plan(value)
+      }
+    }
 
     cp.cataM(planQSM _)
   }
