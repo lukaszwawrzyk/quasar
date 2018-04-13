@@ -27,7 +27,6 @@ import scalaz._
 import scalaz.syntax.all._
 import iotaz.{CopK, TListK}
 import iotaz.TListK.:::
-import slamdata.Predef.Int
 
 sealed trait Unirewrite[T[_[_]], L <: TListK] {
   def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[CopK[L, ?]]]

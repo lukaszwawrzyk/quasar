@@ -56,7 +56,6 @@ class RenderQScriptDSLSpec extends quasar.Qspec with QScriptHelpers {
       |import matryoshka.data.Fix
       |import scalaz.{Const, Inject, NonEmptyList}
       |import scalaz.syntax.either._
-      |import slamdata.Predef.Int
       |type QT[A] = QScriptTotal[Fix, A]
       |type DET[A] = Const[DeadEnd, A]
       |type RTD[A] = Const[Read[ADir], A]

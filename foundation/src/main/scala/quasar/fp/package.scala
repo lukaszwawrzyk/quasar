@@ -349,7 +349,7 @@ package fp {
   }
 
   sealed trait CopKInjectInstances0 extends CopKInjectFunctions {
-    implicit def injectCopK[F[_], G[_] <: CopK[_, _]](implicit IN: CopK.Inject[F, G]): CopKInject[F, G] =
+    implicit def injectCopK[F[_], G[a] <: CopK[_, a]](implicit IN: CopK.Inject[F, G]): CopKInject[F, G] =
       make[F, G](IN.inj, IN.prj)
   }
 

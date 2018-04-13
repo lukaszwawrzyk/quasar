@@ -45,9 +45,6 @@ trait DefaultAnalyzeModule { self: BackendModule =>
 
   object AnalyzeModule extends AnalyzeModule {
 
-    // TODO[scalaz]: Shadow the scalaz.Monad.monadMTMAB SI-2712 workaround
-    import EitherT.eitherTMonad
-
     private def pathCard: APath => Backend[Int] = (apath: APath) => {
       val afile: Option[AFile] = peel(apath).map {
         case (dirPath, \/-(fileName)) => dirPath </> file1(fileName)
