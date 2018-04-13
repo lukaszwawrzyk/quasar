@@ -22,6 +22,8 @@ import quasar.qscript._
 import matryoshka.data.Fix
 import matryoshka.implicits._
 
+import slamdata.Predef.Int
+
 class OptimizeSpec extends quasar.Qspec with QScriptHelpers {
   val optimize = new Optimize[Fix]
 
