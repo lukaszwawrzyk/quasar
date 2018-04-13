@@ -248,7 +248,7 @@ object construction {
                                         (implicit corec: CorecursiveT[T],
                                          injCore: Injectable.Aux[QScriptCore[T, ?], F],
                                          injTotal: Injectable.Aux[F, QScriptTotal[T, ?]]) {
-    private def core(fr: QScriptCore[T, R]): R = embed(injCore.inject(fr))
+    private def core(fr: QScriptCore[T, R]): R = embed(injCore.inj(fr))
     def Map(r: R, func: FreeMap[T]): R =
       core(qscript.Map[T, R](r, func))
     def LeftShift(src: R,
@@ -270,7 +270,7 @@ object construction {
     def Union(src: R,
               lBranch: Free[F, Hole],
               rBranch: Free[F, Hole]): R =
-      core(qscript.Union(src, lBranch.mapSuspension(injTotal.inject), rBranch.mapSuspension(injTotal.inject)))
+      core(qscript.Union(src, lBranch.mapSuspension(injTotal.inj), rBranch.mapSuspension(injTotal.inj)))
     def Filter(src: R,
                f: FreeMap[T]): R =
       core(qscript.Filter(src, f))
@@ -278,13 +278,13 @@ object construction {
                from: Free[F, Hole],
                op: SelectionOp,
                count: Free[F, Hole]): R =
-      core(qscript.Subset(src, from.mapSuspension(injTotal.inject), op, count.mapSuspension(injTotal.inject)))
+      core(qscript.Subset(src, from.mapSuspension(injTotal.inj), op, count.mapSuspension(injTotal.inj)))
     def Unreferenced: R =
       core(qscript.Unreferenced())
     def BucketKey(src: R, value: FreeMap[T], name: FreeMap[T])(implicit F: Injectable.Aux[ProjectBucket[T, ?], F]): R =
-      embed(F.inject(qscript.BucketKey(src, value, name)))
+      embed(F.inj(qscript.BucketKey(src, value, name)))
     def BucketIndex(src: R, value: FreeMap[T], index: FreeMap[T])(implicit F: Injectable.Aux[ProjectBucket[T, ?], F]): R =
-      embed(F.inject(qscript.BucketIndex(src, value, index)))
+      embed(F.inj(qscript.BucketIndex(src, value, index)))
     def ThetaJoin(src: R,
                   lBranch: Free[F, Hole],
                   rBranch: Free[F, Hole],
@@ -292,7 +292,7 @@ object construction {
                   f: JoinType,
                   combine: JoinFunc[T])
                  (implicit F: Injectable.Aux[ThetaJoin[T, ?], F]): R =
-      embed(F.inject(qscript.ThetaJoin(src, lBranch.mapSuspension(injTotal.inject), rBranch.mapSuspension(injTotal.inject), on, f, combine)))
+      embed(F.inj(qscript.ThetaJoin(src, lBranch.mapSuspension(injTotal.inj), rBranch.mapSuspension(injTotal.inj), on, f, combine)))
     def EquiJoin(src: R,
                  lBranch: Free[F, Hole],
                  rBranch: Free[F, Hole],
@@ -300,16 +300,16 @@ object construction {
                  f: JoinType,
                  combine: JoinFunc[T])
                 (implicit F: Injectable.Aux[EquiJoin[T, ?], F]): R =
-      embed(F.inject(qscript.EquiJoin(src, lBranch.mapSuspension(injTotal.inject), rBranch.mapSuspension(injTotal.inject), key, f, combine)))
+      embed(F.inj(qscript.EquiJoin(src, lBranch.mapSuspension(injTotal.inj), rBranch.mapSuspension(injTotal.inj), key, f, combine)))
     def ShiftedRead[A](path: A,
                        idStatus: IdStatus)
                       (implicit F: Injectable.Aux[Const[ShiftedRead[A], ?], F]): R =
-      embed(F.inject(Const(qscript.ShiftedRead(path, idStatus))))
+      embed(F.inj(Const(qscript.ShiftedRead(path, idStatus))))
     def Read[A](path: A)
                (implicit F: Injectable.Aux[Const[Read[A], ?], F]): R =
-      embed(F.inject(Const(qscript.Read(path))))
+      embed(F.inj(Const(qscript.Read(path))))
     def Root(implicit F: Injectable.Aux[Const[DeadEnd, ?], F]): R =
-      embed(F.inject(Const(qscript.Root)))
+      embed(F.inj(Const(qscript.Root)))
     def Hole(implicit ev: Free[F, Hole] === R): R =
       ev(Free.pure(SrcHole))
   }

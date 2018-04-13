@@ -183,7 +183,7 @@ package object qscript {
     src: T[F])(
     implicit FI: Injectable.Aux[F, QScriptTotal[T, ?]]):
       Option[T[F]] =
-    target.as(src.transAna[T[QScriptTotal[T, ?]]](FI.inject)).cata(recover(_.embed)).transAnaM(FI project _)
+    target.as(src.transAna[T[QScriptTotal[T, ?]]](FI.inj)).cata(recover(_.embed)).transAnaM(FI prj _)
 
   def rebaseTCo[T[_[_]]: BirecursiveT, F[_]: Traverse]
     (target: FreeQS[T])
@@ -193,7 +193,7 @@ package object qscript {
     // TODO: with the right instances & types everywhere, this should look like
     //       target.transAnaM(_.htraverse(FI project _)) ∘ (_ >> srcCo)
     target.cataM[Option, T[CoEnv[Hole, F, ?]]](
-      CoEnv.htraverse(λ[QScriptTotal[T, ?] ~> (Option ∘ F)#λ](FI.project(_))).apply(_) ∘ (_.embed)) ∘
+      CoEnv.htraverse(λ[QScriptTotal[T, ?] ~> (Option ∘ F)#λ](FI.prj(_))).apply(_) ∘ (_.embed)) ∘
       (targ => (targ.convertTo[Free[F, Hole]] >> srcCo.convertTo[Free[F, Hole]]).convertTo[T[CoEnv[Hole, F, ?]]])
 
   /** A variant of `repeatedly` that works with `Inject` instances. */
@@ -201,25 +201,4 @@ package object qscript {
   def injectRepeatedly[F [_], G[_] <: ACopK, A](op: F[A] => Option[G[A]])(implicit F: F :<<: G): F[A] => G[A] =
     fa => op(fa).fold(F.inj(fa))(ga => F.prj(ga).fold(ga)(injectRepeatedly(op)))
 
-/*
-  // Helpers for creating `Injectable` instances
-
-  object ::\:: {
-    def apply[F[_]] = new Aux[F]
-
-    final class Aux[F[_]] {
-      def apply[T[_[_]], G[_]]
-        (i: Injectable.Aux[G, QScriptTotal[T, ?]])
-        (implicit F: F :<: QScriptTotal[T, ?])
-          : Injectable.Aux[Coproduct[F, G, ?], QScriptTotal[T, ?]] =
-        Injectable.coproduct(Injectable.inject[F, QScriptTotal[T, ?]], i)
-    }
-  }
-
-  def ::/::[T[_[_]], F[_], G[_]]
-    (implicit F: F :<: QScriptTotal[T, ?], G: G :<: QScriptTotal[T, ?])
-      : Injectable.Aux[Coproduct[F, G, ?], QScriptTotal[T, ?]] =
-    Injectable.coproduct(
-      Injectable.inject[F, QScriptTotal[T, ?]],
-      Injectable.inject[G, QScriptTotal[T, ?]])*/
 }

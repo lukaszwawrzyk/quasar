@@ -27,6 +27,7 @@ import matryoshka.patterns._
 import monocle.Lens
 import scalaz.{Lens => _, _}, BijectionT._, Kleisli._, Liskov._, Scalaz._
 import shapeless.{Fin, Nat, Sized, Succ}
+import quasar.qscript.Injectable
 
 sealed abstract class ListMapInstances {
   implicit def seqW[A](xs: Seq[A]): SeqW[A] = new SeqW(xs)
@@ -229,7 +230,7 @@ package object fp
   // Applied CopK type useful to define type upper bounds
   type ACopK = CopK[_, _]
   // Version of :<: for Iotaz
-  type :<<:[F[_], G[_] <: ACopK] = CopK.Inject[F, G]
+  type :<<:[F[_], G[_]] = Injectable.Aux[F, G]
 
   implicit class TwoElemCopKToEitherOps[F[_], G[_], A](val copK: CopK[F ::: G ::: TNilK, A])(
     implicit

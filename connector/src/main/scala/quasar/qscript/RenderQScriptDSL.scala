@@ -44,7 +44,7 @@ object RenderQScriptDSL {
   (implicit I: Injectable.Aux[F, QScriptTotal[T, ?]]): RenderDSL[T[F]] =
     new RenderDSL[T[F]] {
       // hard-coded here to fix.
-      def toDsl(a: T[F]) = fixQSRender.apply("fix", a.transCata[Fix[QScriptTotal[T, ?]]](I.inject(_)))
+      def toDsl(a: T[F]) = fixQSRender.apply("fix", a.transCata[Fix[QScriptTotal[T, ?]]](I.inj(_)))
     }
 
   def delayRenderQScriptDSL[T[_[_]]: RecursiveT, F[_]: Functor]

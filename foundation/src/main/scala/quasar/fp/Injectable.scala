@@ -19,7 +19,8 @@ package quasar.qscript
 
 import slamdata.Predef._
 import scalaz._, Scalaz._
-import quasar.fp.{ACopK, :<<:}
+import quasar.fp.ACopK
+import iotaz.CopK
 
 /** This is like [[scalaz.Inject]], but for injecting an arbitrary coproduct
   * where all of the components are in the `OUT` coproduct in any order.
@@ -30,8 +31,10 @@ import quasar.fp.{ACopK, :<<:}
   */
 trait Injectable[IN[_]] {
   type OUT[A]
-  def inject: IN ~> OUT
-  def project: OUT ~> λ[A => Option[IN[A]]]
+  def inj: IN ~> OUT
+  def prj: OUT ~> λ[A => Option[IN[A]]]
+  final def apply[A](fa: IN[A]): OUT[A] = inj(fa)
+  final def unapply[A](ga: OUT[A]): Option[IN[A]] = prj(ga)
 }
 
 object Injectable extends InjectableInstances {
@@ -49,17 +52,20 @@ sealed trait InjectableInstances extends InjectableInstances0 {
     * quadratic, so instead this is provided so that you can manually construct
     * instances where they're needed. */
   def coproduct[F[_], G[_], H[_]](implicit F: Aux[F, H], G: Aux[G, H]): Aux[Coproduct[F, G, ?], H] = make(
-    λ[Coproduct[F, G, ?] ~> H](_.run.fold(F.inject, G.inject)),
+    λ[Coproduct[F, G, ?] ~> H](_.run.fold(F.inj, G.inj)),
     λ[H ~> λ[A => Option[Coproduct[F, G, A]]]](out =>
-      F.project(out).cata(
+      F.prj(out).cata(
         f => Coproduct(f.left).some,
-        G.project(out) ∘ (g => Coproduct(g.right))
+        G.prj(out) ∘ (g => Coproduct(g.right))
       )
     )
   )
 
-  implicit def injectCopK[F[_], G[_] <: ACopK](implicit IN: F :<<: G): Aux[F, G] =
+  implicit def injectCopK[F[_], G[_] <: ACopK](implicit IN: CopK.Inject[F, G]): Aux[F, G] =
     make[F, G](IN.inj, IN.prj)
+
+  implicit def reflexiveInjectInstance[F[_]]: Injectable.Aux[F, F] =
+    make[F, F](λ[F ~> F](x => x), λ[F ~> λ[A => Option[F[A]]]](some(_)))
 
 }
 
@@ -74,10 +80,10 @@ sealed trait InjectableBase {
 
   type Aux[IN[_], F[_]] = Injectable[IN] { type OUT[A] = F[A] }
 
-  def make[F[_], G[_]](inj: F ~> G, prj: G ~> λ[A => Option[F[A]]]): Aux[F, G] = new Injectable[F] {
+  def make[F[_], G[_]](inject: F ~> G, project: G ~> λ[A => Option[F[A]]]): Aux[F, G] = new Injectable[F] {
     type OUT[A] = G[A]
-    val inject  = inj
-    val project = prj
+    val inj  = inject
+    val prj = project
   }
 
 }

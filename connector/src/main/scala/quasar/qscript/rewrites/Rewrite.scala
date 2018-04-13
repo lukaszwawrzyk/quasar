@@ -194,13 +194,13 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
 
     (left.resumeTwice, right.resumeTwice) match {
       // left side is the data while the right side shifts the same data
-      case (\/-(SrcHole), -\/(r)) => FI.project(r) >>= QC.prj.apply match {
+      case (\/-(SrcHole), -\/(r)) => FI.prj(r) >>= QC.prj.apply match {
         case Some(LeftShift(lshiftSrc, struct, status, shiftType, undef, repair)) =>
           lshiftSrc match {
             case \/-(SrcHole) =>
               unifyMapRightSideShift(struct, status, shiftType, undef, repair, HoleF, HoleF)
 
-            case -\/(values) => FI.project(values) >>= QC.prj.apply match {
+            case -\/(values) => FI.prj(values) >>= QC.prj.apply match {
               case Some(Map(mapSrc, srcFn)) if mapSrc ≟ HoleQS =>
                 unifyMapRightSideShift(struct, status, shiftType, undef, repair, srcFn, HoleF)
 
@@ -211,13 +211,13 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
       }
 
       // right side is the data while the left side shifts the same data
-      case (-\/(l), \/-(SrcHole)) => FI.project(l) >>= QC.prj.apply match {
+      case (-\/(l), \/-(SrcHole)) => FI.prj(l) >>= QC.prj.apply match {
         case Some(LeftShift(lshiftSrc, struct, status, shiftType, undef, repair)) =>
           lshiftSrc match {
             case \/-(SrcHole) =>
               unifyMapLeftSideShift(struct, status, shiftType, undef, repair, HoleF, HoleF)
 
-            case -\/(values) => FI.project(values) >>= QC.prj.apply match {
+            case -\/(values) => FI.prj(values) >>= QC.prj.apply match {
               case Some(Map(mapSrc, srcFn)) if mapSrc ≟ HoleQS =>
                 unifyMapLeftSideShift(struct, status, shiftType, undef, repair, srcFn, HoleF)
 
@@ -227,14 +227,14 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
         case _ => NoneBranch
       }
 
-      case (-\/(l), -\/(r)) => (l, r).uTraverse(m => FI.project(m) >>= QC.prj.apply) collect {
+      case (-\/(l), -\/(r)) => (l, r).uTraverse(m => FI.prj(m) >>= QC.prj.apply) collect {
         // left side maps over the data while the right side shifts the same data
         case (Map(\/-(SrcHole), mapFn), LeftShift(lshiftSrc, struct, status, stpe, undef, repair)) =>
           lshiftSrc match {
             case \/-(SrcHole) =>
               unifyMapRightSideShift(struct, status, stpe, undef, repair, HoleF, mapFn)
 
-            case -\/(values) => FI.project(values) >>= QC.prj.apply match {
+            case -\/(values) => FI.prj(values) >>= QC.prj.apply match {
               case Some(Map(mapSrc, srcFn)) if mapSrc ≟ HoleQS =>
                 unifyMapRightSideShift(struct, status, stpe, undef, repair, srcFn, mapFn)
 
@@ -248,7 +248,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
             case \/-(SrcHole) =>
               unifyMapLeftSideShift(struct, status, shiftType, undef, repair, HoleF, mapFn)
 
-            case -\/(values) => FI.project(values) >>= QC.prj.apply match {
+            case -\/(values) => FI.prj(values) >>= QC.prj.apply match {
               case Some(Map(mapSrc, srcFn)) if mapSrc ≟ HoleQS =>
                 unifyMapLeftSideShift(struct, status, shiftType, undef, repair, srcFn, mapFn)
 
@@ -273,7 +273,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
 
     (left.resumeTwice, right.resumeTwice) match {
       case (-\/(m1), -\/(m2)) =>
-        (FI.project(m1) >>= QC.prj.apply, FI.project(m2) >>= QC.prj.apply) match {
+        (FI.prj(m1) >>= QC.prj.apply, FI.prj(m2) >>= QC.prj.apply) match {
           // both sides only map over the same data
           case (Some(Map(\/-(SrcHole), mf1)), Some(Map(\/-(SrcHole), mf2))) =>
             BranchUnification { jf =>
@@ -324,7 +324,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
           case (_, _) => NoneBranch
         }
       // one side maps over the src while the other passes the src untouched
-      case (-\/(m1), \/-(SrcHole)) => (FI.project(m1) >>= QC.prj.apply) match {
+      case (-\/(m1), \/-(SrcHole)) => (FI.prj(m1) >>= QC.prj.apply) match {
         case Some(Map(\/-(SrcHole), mf1)) =>
           BranchUnification { jf =>
             (jf >>= {
@@ -342,7 +342,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
         case _ => NoneBranch
       }
       // the other side maps over the src while the one passes the src untouched
-      case (\/-(SrcHole), -\/(m2)) => (FI.project(m2) >>= QC.prj.apply) match {
+      case (\/-(SrcHole), -\/(m2)) => (FI.prj(m2) >>= QC.prj.apply) match {
         case Some(Map(\/-(SrcHole), mf2)) =>
           BranchUnification { jf: JoinFunc =>
             (jf >>= {

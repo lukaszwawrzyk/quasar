@@ -150,8 +150,8 @@ private[qscript] final class ExpandDirsPath[T[_[_]]: BirecursiveT, O[_]: Functor
   def union(elems: NonEmptyList[O[T[O]]]): O[T[O]] =
     elems.foldRight1(
       (elem, acc) => QC.inj(Union(QC.inj(Unreferenced[T, T[O]]()).embed,
-        elem.embed.cata[Free[QScriptTotal, Hole]](g => Free.roll(FI.inject(g))),
-        acc.embed.cata[Free[QScriptTotal, Hole]](g => Free.roll(FI.inject(g))))))
+        elem.embed.cata[Free[QScriptTotal, Hole]](g => Free.roll(FI.inj(g))),
+        acc.embed.cata[Free[QScriptTotal, Hole]](g => Free.roll(FI.inj(g))))))
 
   def wrapDir(name: String, d: O[T[O]]): O[T[O]] =
     QC.inj(Map(d.embed, Free.roll(MFC(MakeMap(StrLit(name), HoleF)))))

@@ -51,8 +51,8 @@ object Trans {
 
     val prismT: PrismNT[QScriptTotal[T, ?], F] =
       PrismNT(
-        λ[QScriptTotal[T, ?] ~> (Option ∘ F)#λ](x => G.project(x).flatMap(GtoF.get.apply)),
-        G.inject compose GtoF.reverseGet)
+        λ[QScriptTotal[T, ?] ~> (Option ∘ F)#λ](x => G.prj(x).flatMap(GtoF.get.apply)),
+        G.inj compose GtoF.reverseGet)
 
     def tb[A]: G[A] => M[G[A]] = BR.branches.modifyF[M](transBranches[T, F, M](trans, prismT))
     transHyloM(t)(tb[T[G]], transG)

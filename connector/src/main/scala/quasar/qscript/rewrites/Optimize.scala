@@ -35,7 +35,7 @@ class Optimize[T[_[_]]: BirecursiveT: EqualT: ShowT] extends TTypes[T] {
     (implicit QC: QScriptCore :<<: F)
       : QScriptCore[T[G]] => Option[QScriptCore[T[G]]] = {
     case Subset(src, from, sel, count) =>
-      from.resume.swap.toOption >>= (FI project _) >>= {
+      from.resume.swap.toOption >>= (FI prj _) >>= {
         case Map(fromInner, mf) =>
           Map(FtoG(QC.inj(Subset(src, fromInner, sel, count))).embed, mf).some
         case _ => None
@@ -49,8 +49,8 @@ class Optimize[T[_[_]]: BirecursiveT: EqualT: ShowT] extends TTypes[T] {
       QC.prj(src) match {
         case Some(Union(innerSrc, left, right)) =>
           Union(innerSrc,
-            Free.roll(FI.inject(Filter(left, fm))),
-            Free.roll(FI.inject(Filter(right, fm)))).some
+            Free.roll(FI.inj(Filter(left, fm))),
+            Free.roll(FI.inj(Filter(right, fm)))).some
         case _ => None
       }
     case _ => None

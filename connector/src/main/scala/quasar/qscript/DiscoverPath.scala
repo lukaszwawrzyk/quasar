@@ -189,8 +189,8 @@ private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_] <: ACopK 
   private def union(elems: NonEmptyList[T[O]]): T[O] =
     elems.foldRight1(
       (elem, acc) => QC.inj(Union(QC.inj(Unreferenced[T, T[O]]()).embed,
-        elem.cata[FreeQS](g => Free.roll(FI.inject(g))),
-        acc.cata[FreeQS](g => Free.roll(FI.inject(g))))).embed)
+        elem.cata[FreeQS](g => Free.roll(FI.inj(g))),
+        acc.cata[FreeQS](g => Free.roll(FI.inj(g))))).embed)
 
   private def makeRead[F[_] <: ACopK](path: ADir)(implicit R: Const[Read[ADir], ?] :<<: F):
       F[T[F]] =
@@ -222,7 +222,7 @@ private[qscript] final class DiscoverPathT[T[_[_]]: BirecursiveT, O[_] <: ACopK 
       : M[FreeQS] =
     branch.cataM[M, List[ADir] \&/ T[QScriptTotal]](
       interpretM(
-        κ((src ∘ (_.transCata[T[QScriptTotal]](FI.inject))).point[M]),
+        κ((src ∘ (_.transCata[T[QScriptTotal]](FI.inj))).point[M]),
         DiscoverPathTotal.discoverPath(f))) >>=
       (DiscoverPathTTotal.unionAll[M](f).apply(_) ∘ (_.cata(Free.roll[QScriptTotal, Hole])))
 
