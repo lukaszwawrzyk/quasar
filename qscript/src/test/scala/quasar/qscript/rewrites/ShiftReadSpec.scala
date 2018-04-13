@@ -29,6 +29,8 @@ import matryoshka.implicits._
 import pathy.Path._
 import scalaz._, Scalaz._
 
+import slamdata.Predef.Int
+
 class ShiftReadSpec extends quasar.Qspec with QScriptHelpers with TreeMatchers {
   val rewrite = new Rewrite[Fix]
 
