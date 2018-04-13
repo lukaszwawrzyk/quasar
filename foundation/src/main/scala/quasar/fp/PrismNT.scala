@@ -48,7 +48,7 @@ object PrismNT {
   def inject[F[_], G[_]](implicit I: F :<: G): PrismNT[G, F] =
     PrismNT(λ[G ~> (Option ∘ F)#λ](I.prj(_)), λ[F ~> G](I.inj(_)))
 
-  def injectCopK[F[_], G[_] <: ACopK](implicit I: F :<<: G): PrismNT[G, F] =
+  def injectCopK[F[_], G[_]](implicit I: F :<<: G): PrismNT[G, F] =
     PrismNT(I.prj, I.inj)
 
   def coEnv[F[_], A]: PrismNT[CoEnv[A, F, ?], F] =

@@ -109,7 +109,15 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
           OnUndefined.Omit,
           func.RightSide).unFix
 
-      Coalesce[Fix, QScriptCore, QScriptCore].coalesceQC(idPrism).apply(exp) must
+      Coalesce[Fix, QScriptCore, QScriptCore](
+        Coalesce.qscriptCore(
+          Fix.birecursiveT,
+          Fix.equalT,
+          Fix.showT,
+          RenderTreeT.fix,
+          CopKInject.reflexiveCopKInject[QScriptCore]
+        )
+      ).coalesceQC(idPrism).apply(exp) must
       equal(
         fix.LeftShift(
           fix.Unreferenced,

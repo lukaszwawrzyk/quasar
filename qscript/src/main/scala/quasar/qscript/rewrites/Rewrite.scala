@@ -71,7 +71,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     }.join
 
   // TODO: make this simply a transform itself, rather than a full traversal.
-  def shiftRead[F[_]: Functor, G[_] <: ACopK: Traverse]
+  def shiftRead[F[_]: Functor, G[_]: Traverse]
     (implicit QC: QScriptCore :<<: G,
               TJ: ThetaJoin :<<: G,
               SD: Const[ShiftedRead[ADir], ?] :<<: G,
@@ -89,7 +89,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
       ((_: T[F]).project) >>> (S.shiftRead[G](idPrism.reverseGet)(_)))
   }
 
-  def shiftReadDir[F[_]: Functor, G[_] <: ACopK: Traverse](
+  def shiftReadDir[F[_]: Functor, G[_]: Traverse](
     implicit
     QC: QScriptCore :<<: G,
     TJ: ThetaJoin :<<: G,
@@ -105,7 +105,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
       (_.embed),
       ((_: T[F]).project) >>> (S.shiftReadDir[G](idPrism.reverseGet)(_)))
 
-  def simplifyJoinOnShiftRead[F[_]: Functor, G[_] <: ACopK: Traverse, H[_]: Functor]
+  def simplifyJoinOnShiftRead[F[_]: Functor, G[_]: Traverse, H[_]: Functor]
     (implicit QC: QScriptCore :<<: G,
               TJ: ThetaJoin :<<: G,
               SD: Const[ShiftedRead[ADir], ?] :<<: G,
@@ -145,7 +145,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
   def NoneBranch[F[_], A, B] =
     BranchUnification[F, A, B]((_: JoinFunc) => None)((_: FreeMapA[A]) => None)
 
-  def unifySimpleBranchesJoinSide[F[_] <: ACopK, A]
+  def unifySimpleBranchesJoinSide[F[_], A]
     (src: A, left: FreeQS, right: FreeQS)
     (rebase: FreeQS => A => Option[A])
     (implicit
@@ -262,7 +262,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     }
   }
 
-  def unifySimpleBranchesHole[F[_] <: ACopK, A]
+  def unifySimpleBranchesHole[F[_], A]
     (src: A, left: FreeQS, right: FreeQS)
     (rebase: FreeQS => A => Option[A])
     (implicit
@@ -369,7 +369,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     }
   }
 
-  def unifySimpleBranches[F[_] <: ACopK, A]
+  def unifySimpleBranches[F[_], A]
     (src: A, left: FreeQS, right: FreeQS, func: JoinFunc)
     (rebase: FreeQS => A => Option[A])
     (implicit
@@ -387,7 +387,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
 
   // FIXME: This really needs to ensure that the condition is that of an
   //        autojoin, otherwise it’ll elide things that are truly meaningful.
-  def elideNopJoin[F[_] <: ACopK, A]
+  def elideNopJoin[F[_], A]
     (rebase: FreeQS => A => Option[A])
     (implicit QC: QScriptCore :<<: F, FI: Injectable.Aux[F, QScriptTotal])
       : ThetaJoin[A] => Option[F[A]] = {
@@ -487,7 +487,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
   // - convert any remaning projects to maps
   // - coalesce nodes
   // - normalize mapfunc
-  private def applyNormalizations[F[_] <: ACopK: Functor: Normalizable, G[_]: Functor](
+  private def applyNormalizations[F[_]: Functor: Normalizable, G[_]: Functor](
     prism: PrismNT[G, F],
     normalizeJoins: F[T[G]] => Option[G[T[G]]])(
     implicit C: Coalesce.Aux[T, F, F],
@@ -509,7 +509,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     ))(prism(ftf))
   }
 
-  private def normalizeWithBijection[F[_] <: ACopK: Functor: Normalizable, G[_]: Functor, A](
+  private def normalizeWithBijection[F[_]: Functor: Normalizable, G[_]: Functor, A](
     bij: Bijection[A, T[G]])(
     prism: PrismNT[G, F],
     normalizeJoins: F[T[G]] => Option[G[T[G]]])(
@@ -520,7 +520,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     fa => applyNormalizations[F, G](prism, normalizeJoins)
       .apply(fa ∘ bij.toK.run) ∘ bij.fromK.run
 
-  private def normalizeEJBijection[F[_] <: ACopK: Functor: Normalizable, G[_]: Functor, A](
+  private def normalizeEJBijection[F[_]: Functor: Normalizable, G[_]: Functor, A](
     bij: Bijection[A, T[G]])(
     prism: PrismNT[G, F])(
     implicit C:  Coalesce.Aux[T, F, F],
@@ -535,7 +535,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     normalizeWithBijection[F, G, A](bij)(prism, normEJ compose (prism apply _))
   }
 
-  def normalizeEJ[F[_] <: ACopK: Functor: Normalizable](
+  def normalizeEJ[F[_]: Functor: Normalizable](
     implicit C:  Coalesce.Aux[T, F, F],
              QC: QScriptCore :<<: F,
              EJ: EquiJoin :<<: F,
@@ -543,7 +543,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
       F[T[F]] => F[T[F]] =
     normalizeEJBijection[F, F, T[F]](bijectionId)(idPrism)
 
-  def normalizeEJCoEnv[F[_] <: ACopK: Functor: Normalizable](
+  def normalizeEJCoEnv[F[_]: Functor: Normalizable](
     implicit C:  Coalesce.Aux[T, F, F],
              QC: QScriptCore :<<: F,
              EJ: EquiJoin :<<: F,
@@ -551,7 +551,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
       F[Free[F, Hole]] => CoEnv[Hole, F, Free[F, Hole]] =
     normalizeEJBijection[F, CoEnv[Hole, F, ?], Free[F, Hole]](coenvBijection)(coenvPrism)
 
-  private def normalizeTJBijection[F[_] <: ACopK: Functor: Normalizable, G[_]: Functor, A](
+  private def normalizeTJBijection[F[_]: Functor: Normalizable, G[_]: Functor, A](
     bij: Bijection[A, T[G]])(
     prism: PrismNT[G, F],
     rebase: FreeQS => T[G] => Option[T[G]])(
@@ -569,7 +569,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     normalizeWithBijection[F, G, A](bij)(prism, normTJ compose (prism apply _))
   }
 
-  def normalizeTJ[F[_] <: ACopK: Traverse: Normalizable](
+  def normalizeTJ[F[_]: Traverse: Normalizable](
     implicit C:  Coalesce.Aux[T, F, F],
              QC: QScriptCore :<<: F,
              TJ: ThetaJoin :<<: F,
@@ -577,7 +577,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
       F[T[F]] => F[T[F]] =
     normalizeTJBijection[F, F, T[F]](bijectionId)(idPrism, rebaseT)
 
-  def normalizeTJCoEnv[F[_] <: ACopK: Traverse: Normalizable](
+  def normalizeTJCoEnv[F[_]: Traverse: Normalizable](
     implicit C:  Coalesce.Aux[T, F, F],
              QC: QScriptCore :<<: F,
              TJ: ThetaJoin :<<: F,
@@ -593,7 +593,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     * `f` takes QScript representing a _potential_ path to a file, converts
     * [[Root]] and its children to path, with the operations post-file remaining.
     */
-  def pathify[M[_]: Monad: MonadFsErr, IN[_]: Traverse, OUT[_] <: ACopK: Traverse]
+  def pathify[M[_]: Monad: MonadFsErr, IN[_]: Traverse, OUT[_]: Traverse]
     (g: DiscoverPath.ListContents[M])
     (implicit
       FS: DiscoverPath.Aux[T, IN, OUT],

@@ -20,7 +20,7 @@ import slamdata.Predef.{Map => _, _}
 
 import quasar.ejson
 import quasar.ejson.{EJson, ExtEJson}
-import quasar.fp.{copkTraverse, :<<:, ACopK, PrismNT}
+import quasar.fp.{copkTraverse, :<<:, PrismNT}
 import quasar.fp.ski.κ
 import quasar.qscript._
 import quasar.qscript.analysis.Outline
@@ -90,7 +90,7 @@ object PreferProjection extends PreferProjectionInstances {
   /** Replaces key deletion of a map having statically known structure with a
     * projection of the complement of the deleted key.
     */
-  def projectComplementƒ[T[_[_]]: BirecursiveT, F[_] <: ACopK : Functor, A]
+  def projectComplementƒ[T[_[_]]: BirecursiveT, F[_] : Functor, A]
       (implicit I: MapFuncCore[T, ?] :<<: F)
       : ElgotAlgebra[(Outline.Shape, ?), CoEnv[A, F, ?], Free[F, A]] = {
 

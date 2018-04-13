@@ -173,7 +173,7 @@ package object fp
       G[A] => G[A] =
     ftf => F.prj(ftf).fold(ftf)(orig)
 
-  def liftFGCopK[F[_], G[_] <: ACopK, A](orig: F[A] => G[A])(implicit F: F :<<: G):
+  def liftFGCopK[F[_], G[_], A](orig: F[A] => G[A])(implicit F: F :<<: G):
       G[A] => G[A] =
     ftf => F.prj(ftf).fold(ftf)(orig)
 
@@ -186,7 +186,7 @@ package object fp
     ga => prism.get(ga).flatMap(f)
 
 
-  def liftFF[F[_], G[_] <: ACopK, A](orig: F[A] => F[A])(implicit F: F :<<: G):
+  def liftFF[F[_], G[_], A](orig: F[A] => F[A])(implicit F: F :<<: G):
       G[A] => G[A] =
     ftf => F.prj(ftf).fold(ftf)(orig.andThen(F.inj))
 
@@ -226,10 +226,7 @@ package object fp
           case (_,       _)       => false
         })))
 
-  // Applied CopK type useful to define type upper bounds
-  type ACopK = CopK[_, _]
-  // Version of :<: for Iotaz
-  type :<<:[F[_], G[_] <: ACopK] = CopK.Inject[F, G]
+  type :<<:[F[_], G[_]] = CopKInject[F, G]
 
   implicit class TwoElemCopKToEitherOps[F[_], G[_], A](val copK: CopK[F ::: G ::: TNilK, A])(
     implicit
@@ -252,10 +249,6 @@ package object fp
     }
 
   }
-
-  // TODO Needed to injectRepeatedly in quasar/qscript/rewrites/Rewrite.scala:85, but CopK.Inject is sealed :/
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
-  implicit def reflexiveCopKInjectInstance[F[_] <: ACopK]: CopK.Inject[F, F] = null
 
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copkEqual[X <: TListK]: Delay[Equal, CopK[X, ?]] = null
@@ -334,6 +327,39 @@ package object fp
 }
 
 package fp {
+
+  /** This is like [[iotaz.CopK.Inject]], but doesn't hava a type bound on G
+    * that requires G to be [[iotaz.CopK]]. This allows to avoid repeating
+    * this bound on every type that needs inject instance. This also allows
+    * to create reflexive inject instance like in [[scalaz.Inject]] which is
+    * used in some places.
+    */
+  trait CopKInject[F[_], G[_]] extends (F ~> G) {
+    def inj : F ~> G
+    def prj : G ~> λ[A => Option[F[A]]]
+    final def apply[A](fa : F[A]) : G[A] = inj(fa)
+    final def unapply[A](ga : G[A]) : Option[F[A]] = prj(ga)
+  }
+
+  object CopKInject extends CopKInjectInstances
+
+  sealed trait CopKInjectInstances extends CopKInjectInstances0 {
+    implicit def reflexiveCopKInject[F[_]]: CopKInject[F, F] =
+      make[F, F](λ[F ~> F](x => x), λ[F ~> λ[A => Option[F[A]]]](some(_)))
+  }
+
+  sealed trait CopKInjectInstances0 extends CopKInjectFunctions {
+    implicit def injectCopK[F[_], G[_] <: CopK[_, _]](implicit IN: CopK.Inject[F, G]): CopKInject[F, G] =
+      make[F, G](IN.inj, IN.prj)
+  }
+
+  sealed trait CopKInjectFunctions {
+    def make[F[_], G[_]](inject: F ~> G, project: G ~> λ[A => Option[F[A]]]): CopKInject[F, G] = new CopKInject[F, G] {
+      val inj = inject
+      val prj = project
+    }
+  }
+
   /** Lift a `State` computation to operate over a "larger" state given a `Lens`.
     *
     * NB: Uses partial application of `F[_]` for better type inference, usage:
