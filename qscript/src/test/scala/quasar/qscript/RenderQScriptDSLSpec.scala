@@ -20,7 +20,8 @@ import slamdata.Predef.{Eq => _, _}
 import quasar.Type
 import quasar.fp._
 import matryoshka.Delay
-import matryoshka.data.Fix
+import matryoshka.data.{Fix, freeEqual, freeShow}
+import matryoshka.{delayEqual, delayShow}
 import org.specs2.execute.Result
 import quasar.ejson.{EJson, Extension}
 import quasar.time.TemporalPart
