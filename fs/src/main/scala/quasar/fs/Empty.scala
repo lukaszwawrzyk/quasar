@@ -21,7 +21,6 @@ import quasar.fs.Planner.UnsupportedPlan
 import quasar.common.PhaseResults
 import quasar.contrib.pathy._
 import quasar.frontend.logicalplan.{LogicalPlan, LogicalPlanR}
-import quasar.fp.free._
 
 import matryoshka._
 import matryoshka.data.Fix
@@ -102,7 +101,7 @@ object Empty {
     interpretFileSystem(queryFile, readFile, writeFile, manageFile)
 
   def backendEffect[F[_]: Applicative]: BackendEffect ~> F =
-    analyze :+: fileSystem
+    interpretBackendEffect(analyze, queryFile, readFile, writeFile, manageFile)
 
   ////
 

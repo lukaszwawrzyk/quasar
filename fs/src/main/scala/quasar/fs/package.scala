@@ -16,24 +16,27 @@
 
 package quasar
 
+import slamdata.Predef.{SuppressWarnings, Array}
+
 import quasar.common.PhaseResultW
 import quasar.contrib.pathy._
 import quasar.contrib.scalaz.MonadError_
 import quasar.effect.Failure
-import quasar.fp._
-import quasar.fp.free._
 import quasar.fp.ski._
 import quasar.frontend.SemanticErrsT
 
 import pathy.Path._
 import scalaz.{Failure => _, _}, Scalaz._
+import iotaz.{CopK, TNilK}
+import iotaz.TListK.:::
 
 package object fs extends PhysicalErrorPrisms {
   type CompileM[A] = SemanticErrsT[PhaseResultW, A]
 
-  type FileSystem[A] = (QueryFile :\: ReadFile :\: WriteFile :/: ManageFile)#M[A]
+  private type FileSystemList = QueryFile ::: ReadFile ::: WriteFile ::: ManageFile ::: TNilK
+  type FileSystem[A] = CopK[FileSystemList, A]
 
-  type BackendEffect[A] = Coproduct[Analyze, FileSystem, A]
+  type BackendEffect[A] = CopK[Analyze ::: FileSystemList, A]
 
   type FileSystemFailure[A] = Failure[FileSystemError, A]
   type FileSystemErrT[F[_], A] = EitherT[F, FileSystemError, A]
@@ -92,22 +95,26 @@ package object fs extends PhysicalErrorPrisms {
 
   type PhysErr[A] = Failure[PhysicalError, A]
 
+  @SuppressWarnings(Array("org.wartremover.warts.StringPlusAny", "org.wartremover.warts.Throw"))
   def interpretFileSystem[M[_]](
     q: QueryFile ~> M,
     r: ReadFile ~> M,
     w: WriteFile ~> M,
     m: ManageFile ~> M
-  ): FileSystem ~> M =
-    q :+: r :+: w :+: m
+  ): FileSystem ~> M = {
+    CopK.NaturalTransformation.of[FileSystem, M](q, r, w, m)
+  }
 
+  @SuppressWarnings(Array("org.wartremover.warts.StringPlusAny", "org.wartremover.warts.Throw"))
   def interpretBackendEffect[M[_]](
     a: Analyze ~> M,
     q: QueryFile ~> M,
     r: ReadFile ~> M,
     w: WriteFile ~> M,
     m: ManageFile ~> M
-  ): BackendEffect ~> M =
-    a :+: q :+: r :+: w :+: m
+  ): BackendEffect ~> M = {
+    CopK.NaturalTransformation.of[BackendEffect, M](a, q, r, w, m)
+  }
 
   def nearDir(path: APath): ADir =
     refineType(path).fold(ι, fileParent)
