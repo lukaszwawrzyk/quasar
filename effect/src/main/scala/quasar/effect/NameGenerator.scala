@@ -18,6 +18,7 @@ package quasar.effect
 
 import slamdata.Predef._
 import quasar.fp.ski.κ
+import quasar.fp.{:<<:, ACopK}
 
 import simulacrum.typeclass
 import scalaz._
@@ -50,7 +51,7 @@ sealed abstract class NameGeneratorInstances extends NameGeneratorInstances0 {
       def freshName = F.bind(F.get)(n => F.put(n + 1) as n.toString)
     }
 
-  implicit def monotonicSeqNameGenerator[S[_]](implicit S: MonotonicSeq :<: S): NameGenerator[Free[S, ?]] =
+  implicit def monotonicSeqNameGenerator[S[a] <: ACopK[a]](implicit S: MonotonicSeq :<<: S): NameGenerator[Free[S, ?]] =
     new NameGenerator[Free[S, ?]] {
       def freshName = MonotonicSeq.Ops[S].next map (_.toString)
     }

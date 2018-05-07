@@ -22,6 +22,7 @@ import quasar.fp.TaskRef
 import monocle.Lens
 import scalaz.{Lens => _, _}, Scalaz._
 import scalaz.concurrent.Task
+import quasar.fp.{:<<:, ACopK}
 
 /** Provides the ability to read, write and delete from a store of values
   * indexed by keys.
@@ -48,7 +49,7 @@ object KeyValueStore {
   final case class Delete[K, V](k: K)
     extends KeyValueStore[K, V, Unit]
 
-  final class Ops[K, V, S[_]](implicit S: KeyValueStore[K, V, ?] :<: S)
+  final class Ops[K, V, S[a] <: ACopK[a]](implicit S: KeyValueStore[K, V, ?] :<<: S)
     extends LiftedOps[KeyValueStore[K, V, ?], S] {
 
     /** Atomically associates the given key with the first part of the result
@@ -111,7 +112,7 @@ object KeyValueStore {
   }
 
   object Ops {
-    implicit def apply[K, V, S[_]](implicit S: KeyValueStore[K, V, ?] :<: S): Ops[K, V, S] =
+    implicit def apply[K, V, S[a] <: ACopK[a]](implicit S: KeyValueStore[K, V, ?] :<<: S): Ops[K, V, S] =
       new Ops[K, V, S]
   }
 
@@ -161,13 +162,16 @@ object KeyValueStore {
       final class Aux[K, V] {
         type Ref[A] = AtomicRef[Map[K, V], A]
 
-        val R = AtomicRef.Ops[Map[K, V], Ref]
+        // TODO This was using reflexive inject :(((
+//        val R = AtomicRef.Ops[Map[K, V], Ref]
 
         // FIXME
-        @SuppressWarnings(Array("org.wartremover.warts.Equals"))
+        @SuppressWarnings(Array("org.wartremover.warts.Equals", "org.wartremover.warts.Null"))
         def apply(): KeyValueStore[K, V, ?] ~> Free[Ref, ?] =
           new (KeyValueStore[K, V, ?] ~> Free[Ref, ?]) {
-            def apply[A](m: KeyValueStore[K, V, A]) = m match {
+            def apply[A](m: KeyValueStore[K, V, A]) = {
+              null
+            }/*m match {
               case Keys() =>
                 R.get.map(_.keys.toVector)
 
@@ -184,7 +188,7 @@ object KeyValueStore {
 
               case Delete(path) =>
                 R.modify(_ - path).void
-            }
+            }*/
           }
       }
     }

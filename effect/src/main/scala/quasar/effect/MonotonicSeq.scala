@@ -23,6 +23,7 @@ import monocle.Lens
 import scalaz.{Lens => _, _}
 import scalaz.concurrent.Task
 import scalaz.syntax.applicative._
+import quasar.fp.{:<<:, ACopK}
 
 /** Provides the ability to request the next element of a monotonically
   * increasing numeric sequence.
@@ -41,7 +42,7 @@ sealed abstract class MonotonicSeq[A]
 object MonotonicSeq {
   case object Next extends MonotonicSeq[Long]
 
-  final class Ops[S[_]](implicit S: MonotonicSeq :<: S)
+  final class Ops[S[a] <: ACopK[a]](implicit S: MonotonicSeq :<<: S)
     extends LiftedOps[MonotonicSeq, S] {
 
     def next: FreeS[Long] =
@@ -49,7 +50,7 @@ object MonotonicSeq {
   }
 
   object Ops {
-    implicit def apply[S[_]](implicit S: MonotonicSeq :<: S): Ops[S] =
+    implicit def apply[S[a] <: ACopK[a]](implicit S: MonotonicSeq :<<: S): Ops[S] =
       new Ops[S]
   }
 

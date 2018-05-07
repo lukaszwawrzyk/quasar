@@ -28,7 +28,6 @@ import quasar.contrib.matryoshka._
 import quasar.contrib.scalaz._, eitherT._
 import quasar.contrib.scalaz.concurrent._
 import quasar.fp.:<<:
-import quasar.fp.free._
 import quasar.fp.numeric.{Natural, Positive}
 import quasar.frontend.logicalplan.LogicalPlan
 import quasar.fs._
@@ -86,7 +85,7 @@ trait BackendModule {
     compile(cfg).mapT(shiftNat(_)) map {
       case (runM, close) =>
         val runCfg = λ[Configured ~> M](_.run(cfg))
-        val runFs: BackendEffect ~> Configured = analyzeInterpreter :+: fsInterpreter
+        val runFs: BackendEffect ~> Configured = interpretBackendEffect(analyzeInterpreter, qfInter, rfInter, wfInter, mfInter)
         (shiftNat compose runM compose runCfg compose runFs, close >> shift)
     }
   }
@@ -100,51 +99,47 @@ trait BackendModule {
     })
   }
 
-  private final def fsInterpreter: FileSystem ~> Configured = {
-    val qfInter: QueryFile ~> Configured = λ[QueryFile ~> Configured] {
-      case QueryFile.ExecutePlan(lp, out) =>
-        lpToRepr(lp).flatMap(p => QueryFileModule.executePlan(p.repr, out)).run.run
+  private final def qfInter: QueryFile ~> Configured = λ[QueryFile ~> Configured] {
+    case QueryFile.ExecutePlan(lp, out) =>
+      lpToRepr(lp).flatMap(p => QueryFileModule.executePlan(p.repr, out)).run.run
 
-      case QueryFile.EvaluatePlan(lp) =>
-        lpToRepr(lp).flatMap(p => QueryFileModule.evaluatePlan(p.repr)).run.run
+    case QueryFile.EvaluatePlan(lp) =>
+      lpToRepr(lp).flatMap(p => QueryFileModule.evaluatePlan(p.repr)).run.run
 
-      case QueryFile.More(h) => QueryFileModule.more(h).run.value
-      case QueryFile.Close(h) => QueryFileModule.close(h)
+    case QueryFile.More(h) => QueryFileModule.more(h).run.value
+    case QueryFile.Close(h) => QueryFileModule.close(h)
 
-      case QueryFile.Explain(lp) =>
-        (for {
-          pp <- lpToRepr(lp)
-          explanation <- QueryFileModule.explain(pp.repr)
-        } yield ExecutionPlan(Type, explanation, pp.paths)).run.run
+    case QueryFile.Explain(lp) =>
+      (for {
+        pp <- lpToRepr(lp)
+        explanation <- QueryFileModule.explain(pp.repr)
+      } yield ExecutionPlan(Type, explanation, pp.paths)).run.run
 
-      case QueryFile.ListContents(dir) =>
-        QueryFileModule.listContents(dir).map(set => set.map(Node.fromSegment)).run.value
-      case QueryFile.FileExists(file) => QueryFileModule.fileExists(file)
-    }
+    case QueryFile.ListContents(dir) =>
+      QueryFileModule.listContents(dir).map(set => set.map(Node.fromSegment)).run.value
+    case QueryFile.FileExists(file) => QueryFileModule.fileExists(file)
+  }
 
-    val rfInter: ReadFile ~> Configured = λ[ReadFile ~> Configured] {
-      case ReadFile.Open(file, offset, limit) =>
-        ReadFileModule.open(file, offset, limit).run.value
+  private final def rfInter: ReadFile ~> Configured = λ[ReadFile ~> Configured] {
+    case ReadFile.Open(file, offset, limit) =>
+      ReadFileModule.open(file, offset, limit).run.value
 
-      case ReadFile.Read(h) => ReadFileModule.read(h).run.value
-      case ReadFile.Close(h) => ReadFileModule.close(h)
-    }
+    case ReadFile.Read(h) => ReadFileModule.read(h).run.value
+    case ReadFile.Close(h) => ReadFileModule.close(h)
+  }
 
-    val wfInter: WriteFile ~> Configured = λ[WriteFile ~> Configured] {
-      case WriteFile.Open(file) => WriteFileModule.open(file).run.value
-      case WriteFile.Write(h, chunk) => WriteFileModule.write(h, chunk)
-      case WriteFile.Close(h) => WriteFileModule.close(h)
-    }
+  private final def wfInter: WriteFile ~> Configured = λ[WriteFile ~> Configured] {
+    case WriteFile.Open(file) => WriteFileModule.open(file).run.value
+    case WriteFile.Write(h, chunk) => WriteFileModule.write(h, chunk)
+    case WriteFile.Close(h) => WriteFileModule.close(h)
+  }
 
-    val mfInter: ManageFile ~> Configured = λ[ManageFile ~> Configured] {
-      case ManageFile.Move(pathPair, semantics) =>
-        ManageFileModule.move(pathPair, semantics).run.value
-      case ManageFile.Copy(pathPair) => ManageFileModule.copy(pathPair).run.value
-      case ManageFile.Delete(path) => ManageFileModule.delete(path).run.value
-      case ManageFile.TempFile(near, prefix) => ManageFileModule.tempFile(near, prefix).run.value
-    }
-
-    qfInter :+: rfInter :+: wfInter :+: mfInter
+  private final def mfInter: ManageFile ~> Configured = λ[ManageFile ~> Configured] {
+    case ManageFile.Move(pathPair, semantics) =>
+      ManageFileModule.move(pathPair, semantics).run.value
+    case ManageFile.Copy(pathPair) => ManageFileModule.copy(pathPair).run.value
+    case ManageFile.Delete(path) => ManageFileModule.delete(path).run.value
+    case ManageFile.TempFile(near, prefix) => ManageFileModule.tempFile(near, prefix).run.value
   }
 
   final def lpToQScript

@@ -18,7 +18,7 @@ package quasar.fs
 
 import quasar.contrib.pathy._
 import quasar.fp._
-import quasar.fp.free.{flatMapSNT, liftFT, transformIn}
+import quasar.fp.free.{flatMapSNT, liftFT, transformInCopK}
 import quasar.frontend.{logicalplan => lp}, lp.{LogicalPlan => LP}
 
 import matryoshka.data.Fix
@@ -38,11 +38,11 @@ object transformPaths {
     * @param inPath transforms input paths
     * @param outPath transforms output paths (including those in errors)
     */
-  def readFile[S[_]](
+  def readFile[S[a] <: ACopK[a]](
     inPath: EndoK[AbsPath],
     outPath: EndoK[AbsPath]
   )(implicit
-    S: ReadFile :<: S
+    S: ReadFile :<<: S
   ): S ~> Free[S, ?] = {
     import ReadFile._
 
@@ -63,7 +63,7 @@ object transformPaths {
         R.close(readHFile.modify(inPath(_))(h))
     }
 
-    transformIn(g, liftFT[S])
+    transformInCopK(g, liftFT[S])
   }
 
   /** Returns a natural transformation that transforms all paths in `WriteFile`
@@ -72,11 +72,11 @@ object transformPaths {
     * @param inPath transforms input paths
     * @param outPath transforms output paths (including those in errors)
     */
-  def writeFile[S[_]](
+  def writeFile[S[a] <: ACopK[a]](
     inPath: EndoK[AbsPath],
     outPath: EndoK[AbsPath]
   )(implicit
-    S: WriteFile :<: S
+    S: WriteFile :<<: S
   ): S ~> Free[S, ?] = {
     import WriteFile._
 
@@ -95,7 +95,7 @@ object transformPaths {
       case Close(h) =>
         W.close(writeHFile.modify(inPath(_))(h))
     }
-    transformIn(g, liftFT[S])
+    transformInCopK(g, liftFT[S])
   }
 
   /** Returns a natural transformation that transforms all paths in `ManageFile`
@@ -104,11 +104,11 @@ object transformPaths {
     * @param inPath transforms input paths
     * @param outPath transforms output paths (including those in errors)
     */
-  def manageFile[S[_]](
+  def manageFile[S[a] <: ACopK[a]](
     inPath: EndoK[AbsPath],
     outPath: EndoK[AbsPath]
   )(implicit
-    S: ManageFile :<: S
+    S: ManageFile :<<: S
   ): S ~> Free[S, ?] = {
     import ManageFile._, PathPair._
 
@@ -139,7 +139,7 @@ object transformPaths {
           .run
     }
 
-    transformIn(g, liftFT[S])
+    transformInCopK(g, liftFT[S])
   }
 
   private def transformFile(inPath: EndoK[AbsPath])(lp: Fix[LP]): Fix[LP] =
@@ -152,12 +152,12 @@ object transformPaths {
     * @param outPath transforms output paths (including those in errors)
     * @param outPathR transforms relative output paths
     */
-  def queryFile[S[_]](
+  def queryFile[S[a] <: ACopK[a]](
     inPath: EndoK[AbsPath],
     outPath: EndoK[AbsPath],
     outPathR: EndoK[RelPath]
   )(implicit
-    S: QueryFile :<: S
+    S: QueryFile :<<: S
   ): S ~> Free[S, ?] = {
     import QueryFile._
 
@@ -196,15 +196,15 @@ object transformPaths {
       case FileExists(f) =>
         Q.fileExists(inPath(f))
     }
-    transformIn(g, liftFT[S])
+    transformInCopK(g, liftFT[S])
   }
 
-  def analyze[S[_]](
+  def analyze[S[a] <: ACopK[a]](
     inPath: EndoK[AbsPath],
     outPath: EndoK[AbsPath],
     outPathR: EndoK[RelPath]
   )(implicit
-    S: Analyze :<: S
+    S: Analyze :<<: S
   ): S ~> Free[S, ?] = {
     import Analyze._
 
@@ -214,7 +214,7 @@ object transformPaths {
       case QueryCost(lp) =>
         O.queryCost(transformFile(inPath)(lp)).leftMap(transformErrorPath(outPath)).run
     }
-    transformIn(g, liftFT[S])
+    transformInCopK(g, liftFT[S])
   }
 
   /** Returns a natural transformation that transforms all paths in `FileSystem`
@@ -224,15 +224,15 @@ object transformPaths {
     * @param outPath transforms output paths (including those in errors)
     * @param outPathR transforms relative output paths
     */
-  def fileSystem[S[_]](
+  def fileSystem[S[a] <: ACopK[a]](
     inPath: EndoK[AbsPath],
     outPath: EndoK[AbsPath],
     outPathR: RelPath ~> RelPath
   )(implicit
-    S0: ReadFile :<: S,
-    S1: WriteFile :<: S,
-    S2: ManageFile :<: S,
-    S3: QueryFile :<: S
+    S0: ReadFile :<<: S,
+    S1: WriteFile :<<: S,
+    S2: ManageFile :<<: S,
+    S3: QueryFile :<<: S
   ): S ~> Free[S, ?] = {
     flatMapSNT(readFile[S](inPath, outPath))   compose
     flatMapSNT(writeFile[S](inPath, outPath))  compose

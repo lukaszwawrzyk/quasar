@@ -32,9 +32,11 @@ package object free {
 
   /** `Inject#inj` as a natural transformation. */
   def injectNT[F[_], G[_]](implicit I: F :<: G) = λ[F ~> G](I inj _)
+  def injectNTCopK[F[_], G[a] <: ACopK[a]](implicit I: F :<<: G) = λ[F ~> G](I inj _)
 
   /** Convenience transformation to inject into a coproduct and lift into Free. */
   def injectFT[F[_], S[_]](implicit S: F :<: S): F ~> Free[S, ?] = liftFT[S] compose injectNT[F, S]
+  def injectFTCopK[F[_], S[a] <: ACopK[a]](implicit S: F :<<: S): F ~> Free[S, ?] = liftFT[S] compose injectNTCopK[F, S]
 
   /** `Free#liftF` as a natural transformation */
   def liftFT[S[_]] = λ[S ~> Free[S, ?]](Free liftF _)
@@ -44,5 +46,7 @@ package object free {
     * used otherwise.
     */
   def transformIn[F[_], S[_], G[_]](f: F ~> G, g: S ~> G)(implicit S: F :<: S) =
+    λ[S ~> G](sa => (S prj sa).fold(g(sa))(f))
+  def transformInCopK[F[_], S[a] <: ACopK[a], G[_]](f: F ~> G, g: S ~> G)(implicit S: F :<<: S) =
     λ[S ~> G](sa => (S prj sa).fold(g(sa))(f))
 }
