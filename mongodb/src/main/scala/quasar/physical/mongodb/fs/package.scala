@@ -63,13 +63,13 @@ package object fs {
 
   final case class Salt(s: String) extends scala.AnyVal
 
-  type PhysFsEff[A]  = Coproduct[Task, PhysErr, A]
+  type PhysFsEff[A]  = CopK[Task ::: PhysErr ::: TNilK, A]
 
   def parseConfig(uri: ConnectionUri)
       : DefErrT[Task, MongoConfig] =
     (for {
-      client <- asyncClientDef[Task](uri)
-      version <- free.lift(MongoDbIO.serverVersion.run(client)).into[Task].liftM[DefErrT]
+      client <- asyncClientDef(uri)
+      version <- Free.liftF(MongoDbIO.serverVersion.run(client)).liftM[DefErrT]
       wfExec <- wfExec(client)
     } yield MongoConfig(client, version, wfExec)).mapT(freeTaskToTask.apply)
 
@@ -129,19 +129,18 @@ package object fs {
 
   private def freeFsEffToTask: Free[PhysFsEff, ?] ~> Task = foldMapNT[PhysFsEff, Task](fsEffToTask)
 
-  private def fsEffToTask: PhysFsEff ~> Task = λ[PhysFsEff ~> Task](_.run.fold(
+  private def fsEffToTask: PhysFsEff ~> Task = λ[PhysFsEff ~> Task](_.toDisjunction.fold(
     NaturalTransformation.refl[Task],
     Failure.toRuntimeError[Task, PhysicalError]
   ))
 
-  private[fs] def asyncClientDef[S[_]](
+  @SuppressWarnings(Array("org.wartremover.warts.StringPlusAny", "org.wartremover.warts.Throw"))
+  private[fs] def asyncClientDef(
     uri: ConnectionUri
-  )(implicit
-    S0: Task :<: S
-  ): DefErrT[Free[S, ?], MongoClient] = {
+  ): DefErrT[Free[Task, ?], MongoClient] = {
     import quasar.convertError
-    type Eff[A] = (Task :\: EnvErr :/: CfgErr)#M[A]
-    type M[A] = Free[S, A]
+    type Eff[A] = CopK[Task ::: EnvErr ::: CfgErr ::: TNilK, A]
+    type M[A] = Free[Task, A]
     type ME[A, B] = EitherT[M, A, B]
     type MEEnvErr[A] = ME[EnvironmentError,A]
     type MEConfigErr[A] = ME[ConfigError,A]
@@ -156,9 +155,9 @@ package object fs {
         .compose(Failure.toError[MEConfigErr, ConfigError])
 
     val liftTask: Task ~> DefM =
-      liftMT[M, DefErrT] compose liftFT[S] compose injectNT[Task, S]
+      liftMT[M, DefErrT] compose liftFT[Task]
 
     util.createAsyncMongoClient[Eff](uri)
-      .foldMap[DefM](liftTask :+: evalEnvErr :+: evalCfgErr)
+      .foldMap[DefM](CopK.NaturalTransformation.of[Eff, DefM](liftTask, evalEnvErr, evalCfgErr))
   }
 }

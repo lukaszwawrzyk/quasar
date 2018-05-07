@@ -22,6 +22,7 @@ import quasar.contrib.pathy._
 import quasar.fp.TaskRef
 import quasar.fs._
 import quasar.physical.mongodb._
+import quasar.fp.{:<<:, ACopK}
 
 import com.mongodb.{MongoException, MongoCommandException, MongoServerException}
 import com.mongodb.async.client.MongoClient
@@ -37,11 +38,11 @@ object managefile {
   type MongoManage[A]     = ManageInT[MongoDbIO, A]
 
   /** Run [[MongoManage]] with the given `MongoClient`. */
-  def run[S[_]](
+  def run[S[a] <: ACopK[a]](
     client: MongoClient
   )(implicit
-    S0: Task :<: S,
-    S1: PhysErr :<: S
+    S0: Task :<<: S,
+    S1: PhysErr :<<: S
   ): Task[MongoManage ~> Free[S, ?]] =
     (salt |@| TaskRef(0L)) { (s, ref) =>
       new (MongoManage ~> Free[S, ?]) {

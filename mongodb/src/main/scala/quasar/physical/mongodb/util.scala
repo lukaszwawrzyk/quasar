@@ -23,6 +23,7 @@ import quasar.effect.Failure
 import quasar.fp.free
 import quasar.fs.EnvironmentError
 import quasar.fs.mount.ConnectionUri
+import quasar.fp.{:<<:, ACopK}
 
 import java.util.concurrent.TimeoutException
 
@@ -42,12 +43,12 @@ object util {
     * NB: The connection is tested during creation and creation will fail if
     *     connecting to the server times out.
     */
-  def createAsyncMongoClient[S[_]](
+  def createAsyncMongoClient[S[a] <: ACopK[a]](
     uri: ConnectionUri
   )(implicit
-    S0: Task :<: S,
-    S1: EnvErr :<: S,
-    S2: CfgErr :<: S
+    S0: Task :<<: S,
+    S1: EnvErr :<<: S,
+    S2: CfgErr :<<: S
   ): Free[S, AMongoClient] = {
     val cfgErr = Failure.Ops[ConfigError, S]
     val envErr = Failure.Ops[EnvironmentError, S]
@@ -159,9 +160,9 @@ object util {
     Task.delay { Logger.getLogger("org.mongodb").setLevel(Level.WARNING) }
   }
 
-  private def liftAndHandle[S[_], A]
+  private def liftAndHandle[S[a] <: ACopK[a], A]
               (ta: Task[A])(f: Throwable => Free[S, A])
-              (implicit S0: Task :<: S)
+              (implicit S0: Task :<<: S)
               : Free[S, A] =
     free.lift(ta.attempt).into[S].flatMap(_.fold(f, _.point[Free[S, ?]]))
 }

@@ -44,11 +44,11 @@ object queryfileTypes {
 object queryfile {
   import queryfileTypes._
 
-  def run[C, S[_]](
+  def run[C, S[a] <: ACopK[a]](
     client: MongoClient,
   )(implicit
-    S0: Task :<: S,
-    S1: PhysErr :<: S
+    S0: Task :<<: S,
+    S1: PhysErr :<<: S
   ): Task[MongoQuery[C, ?] ~> Free[S, ?]] = {
     type MQ[A] = MongoQuery[C, A]
     type F[A]  = Free[S, A]

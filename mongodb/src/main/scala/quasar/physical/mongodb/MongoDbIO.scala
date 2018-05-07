@@ -60,11 +60,11 @@ final class MongoDbIO[A] private (protected val r: ReaderT[Task, MongoClient, A]
   def run(c: MongoClient): Task[A] =
     r.run(c)
 
-  def runF[S[_]](
+  def runF[S[a] <: ACopK[a]](
     c: MongoClient
   )(implicit
-    S0: Task :<: S,
-    S1: PhysErr :<: S
+    S0: Task :<<: S,
+    S1: PhysErr :<<: S
   ): Free[S, A] = {
     val mongoErr = Failure.Ops[PhysicalError, S]
     mongoErr.unattempt(free.lift(attemptMongo.run.run(c)).into[S])
