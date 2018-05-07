@@ -35,6 +35,7 @@ import com.couchbase.client.java.util.features.Version
 import org.http4s.{Uri, Query}
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
+import iotaz.CopK
 
 package object fs {
   import common._
@@ -112,6 +113,7 @@ package object fs {
     } yield Config(ClientContext(bkt, DocTypeKey(params.docTypeKey), lcv), cluster)
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.StringPlusAny", "org.wartremover.warts.Throw"))
   def interp: Task[Eff ~> Task] =
     (
       TaskRef(Map.empty[ReadHandle, Cursor])      |@|
@@ -119,13 +121,16 @@ package object fs {
       TaskRef(Map.empty[ResultHandle, Cursor])    |@|
       TaskRef(0L)                                 |@|
       GenUUID.type1[Task]
-    )((kvR, kvW, kvQ, i, genUUID) =>
-      reflNT[Task]                        :+:
-      MonotonicSeq.fromTaskRef(i)         :+:
-      genUUID                             :+:
-      KeyValueStore.impl.fromTaskRef(kvR) :+:
-      KeyValueStore.impl.fromTaskRef(kvW) :+:
-      KeyValueStore.impl.fromTaskRef(kvQ))
+    ) { (kvR, kvW, kvQ, i, genUUID) =>
+      CopK.NaturalTransformation.of[Eff, Task](
+        reflNT[Task],
+        MonotonicSeq.fromTaskRef(i),
+        genUUID,
+        KeyValueStore.impl.fromTaskRef(kvR),
+        KeyValueStore.impl.fromTaskRef(kvW),
+        KeyValueStore.impl.fromTaskRef(kvQ)
+      )
+    }
 
   def compile(cfg: Config): DefErrT[Task, (M ~> Task, Task[Unit])] =
     (interp ∘ (i => (foldMapNT[Eff, Task](i), Task.delay(cfg.cluster.disconnect()).void)))

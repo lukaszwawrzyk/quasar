@@ -41,16 +41,18 @@ import matryoshka._, data._
 import matryoshka.implicits._
 import scalaz._, Scalaz._
 import scalaz.concurrent.Task
+import iotaz.{CopK, TNilK}
+import iotaz.TListK.:::
 
 trait Couchbase extends BackendModule with DefaultAnalyzeModule {
-  type Eff[A] = (
-    Task                                       :\:
-    MonotonicSeq                               :\:
-    GenUUID                                    :\:
-    KeyValueStore[ReadHandle,   Cursor,  ?]    :\:
-    KeyValueStore[WriteHandle,  Collection, ?] :/:
-    KeyValueStore[ResultHandle, Cursor, ?]
-  )#M[A]
+  type Eff[A] = CopK[
+    Task                                       :::
+    MonotonicSeq                               :::
+    GenUUID                                    :::
+    KeyValueStore[ReadHandle,   Cursor,  ?]    :::
+    KeyValueStore[WriteHandle,  Collection, ?] :::
+    KeyValueStore[ResultHandle, Cursor, ?]     :::
+    TNilK, A]
 
   type QS[T[_[_]]] = CouchbaseQScriptCP[T]
 
