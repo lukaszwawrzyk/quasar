@@ -23,6 +23,7 @@ import quasar.contrib.scalaz._
 import quasar.effect.LiftedOps
 import quasar.fp.ski._
 import quasar.fs._
+import quasar.fp.{:<<:, ACopK}
 import quasar.sql.{ScopedExpr, Sql, Statement}
 
 import matryoshka.data.Fix
@@ -77,7 +78,7 @@ object Mounting {
       }
   }
 
-  final class Ops[S[_]](implicit S: Mounting :<: S)
+  final class Ops[S[a] <: ACopK[a]](implicit S: Mounting :<<: S)
     extends LiftedOps[Mounting, S] {
 
     import MountConfig._
@@ -134,7 +135,7 @@ object Mounting {
       scopedExpr: ScopedExpr[Fix[Sql]],
       vars: Variables
     )(implicit
-      S0: MountingFailure :<: S
+      S0: MountingFailure :<<: S
     ): FreeS[Unit] =
       MountingFailure.Ops[S].unattempt(lift(MountView(loc, scopedExpr, vars)))
 
@@ -144,7 +145,7 @@ object Mounting {
       typ: FileSystemType,
       uri: ConnectionUri
     )(implicit
-      S0: MountingFailure :<: S
+      S0: MountingFailure :<<: S
     ): FreeS[Unit] =
       MountingFailure.Ops[S].unattempt(lift(MountFileSystem(loc, typ, uri)))
 
@@ -152,7 +153,7 @@ object Mounting {
       loc: ADir,
       statements: List[Statement[Fix[Sql]]]
     )(implicit
-      SO: MountingFailure :<: S
+      SO: MountingFailure :<<: S
     ): FreeS[Unit] =
       MountingFailure.Ops[S].unattempt(lift(MountModule(loc, statements)))
 
@@ -163,8 +164,8 @@ object Mounting {
       loc: APath,
       config: MountConfig
     )(implicit
-      S0: MountingFailure :<: S,
-      S1: PathMismatchFailure :<: S
+      S0: MountingFailure :<<: S,
+      S1: PathMismatchFailure :<<: S
     ): FreeS[Unit] = {
       val mmErr = PathMismatchFailure.Ops[S]
 
@@ -193,13 +194,13 @@ object Mounting {
       loc: APath,
       config: MountConfig
     )(implicit
-      S0: MountingFailure :<: S,
-      S1: PathMismatchFailure :<: S
+      S0: MountingFailure :<<: S,
+      S1: PathMismatchFailure :<<: S
     ): FreeS[Unit] =
       modify(loc, loc, κ(config))
 
     /** Remove the mount at the given path. */
-    def unmount(path: APath)(implicit S0: MountingFailure :<: S): FreeS[Unit] =
+    def unmount(path: APath)(implicit S0: MountingFailure :<<: S): FreeS[Unit] =
       MountingFailure.Ops[S].unattempt(lift(Unmount(path)))
 
     /** Remount `src` at `dst`, results in an error if there is no mount at
@@ -208,7 +209,7 @@ object Mounting {
     def remount[T](
       src: Path[Abs,T,Sandboxed],
       dst: Path[Abs,T,Sandboxed]
-    )(implicit S0: MountingFailure :<: S): FreeS[Unit] =
+    )(implicit S0: MountingFailure :<<: S): FreeS[Unit] =
       MountingFailure.Ops[S].unattempt(lift(Remount(src, dst)))
 
     def mountOrReplace(
@@ -216,8 +217,8 @@ object Mounting {
       mountConfig: MountConfig,
       replaceIfExists: Boolean
     )(implicit
-      S0: MountingFailure :<: S,
-      S1: PathMismatchFailure :<: S
+      S0: MountingFailure :<<: S,
+      S1: PathMismatchFailure :<<: S
     ): Free[S, Unit] =
       for {
         exists <- lookupType(path).run.isDefined
@@ -235,8 +236,8 @@ object Mounting {
       dst: Path[Abs,T,Sandboxed],
       f: MountConfig => MountConfig
     )(implicit
-      S0: MountingFailure :<: S,
-      S1: PathMismatchFailure :<: S
+      S0: MountingFailure :<<: S,
+      S1: PathMismatchFailure :<<: S
     ): FreeS[Unit] = {
       val mntErr = MountingFailure.Ops[S]
       val mmErr = PathMismatchFailure.Ops[S]
@@ -257,7 +258,7 @@ object Mounting {
   }
 
   object Ops {
-    implicit def apply[S[_]](implicit S: Mounting :<: S): Ops[S] =
+    implicit def apply[S[a] <: ACopK[a]](implicit S: Mounting :<<: S): Ops[S] =
       new Ops[S]
   }
 }

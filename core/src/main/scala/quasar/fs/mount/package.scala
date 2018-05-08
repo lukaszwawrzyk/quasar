@@ -32,21 +32,21 @@ package object mount {
   type MountingFailure[A] = Failure[MountingError, A]
 
   object MountingFailure {
-    def Ops[S[_]](implicit S: MountingFailure :<: S) =
+    def Ops[S[a] <: ACopK[a]](implicit S: MountingFailure :<<: S) =
       Failure.Ops[MountingError, S]
   }
 
   type PathMismatchFailure[A] = Failure[Mounting.PathTypeMismatch, A]
 
   object PathMismatchFailure {
-    def Ops[S[_]](implicit S: PathMismatchFailure :<: S) =
+    def Ops[S[a] <: ACopK[a]](implicit S: PathMismatchFailure :<<: S) =
       Failure.Ops[Mounting.PathTypeMismatch, S]
   }
 
   type MountConfigs[A] = KeyValueStore[APath, MountConfig, A]
 
   object MountConfigs {
-    def Ops[S[_]](implicit S: MountConfigs :<: S) =
+    def Ops[S[a] <: ACopK[a]](implicit S: MountConfigs :<<: S) =
       KeyValueStore.Ops[APath, MountConfig, S]
   }
 

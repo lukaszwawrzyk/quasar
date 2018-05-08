@@ -31,6 +31,7 @@ import matryoshka.data.Fix
 import matryoshka.implicits._
 import pathy.Path._
 import scalaz.{Failure => _, Node => _, _}, Scalaz._
+import iotaz.CopK
 
 object hierarchical {
   import QueryFile.ResultHandle
@@ -43,17 +44,18 @@ object hierarchical {
     *
     * @param rfs `ReadFileF` interpreters indexed by mount
     */
-  def readFile[F[_], S[_]](
+  def readFile[F[_], S[a] <: ACopK[a]](
     rfs: Mounts[ReadFile ~> F]
   )(implicit
-    S: F :<: S
+    S: F :<<: S
   ): ReadFile ~> Free[S, ?] = {
     import ReadFile._
 
     type M[A] = Free[S, A]
 
     lazy val mountedRfs = rfs mapWithDir { case (d, f) =>
-      flatMapSNT(injectFT[F, S] compose f) compose mounted.readFile[ReadFile](d)
+      // TODO this is broken, needs reflexive instance
+      flatMapSNT(injectFTCopK[F, S] compose f) compose /*mounted.readFile[ReadFile](d)*/ liftFT[ReadFile]
     }
 
     λ[ReadFile ~> M] {
@@ -80,17 +82,18 @@ object hierarchical {
     * @param mountSep used to separate the mount from the original file in handles
     * @param wfs `WriteFileF` interpreters indexed by mount
     */
-  def writeFile[F[_], S[_]](
+  def writeFile[F[_], S[a] <: ACopK[a]](
     wfs: Mounts[WriteFile ~> F]
   )(implicit
-    S: F :<: S
+    S: F :<<: S
   ): WriteFile ~> Free[S, ?] = {
     import WriteFile._
 
     type M[A] = Free[S, A]
 
     lazy val mountedWfs = wfs mapWithDir { case (d, f) =>
-      flatMapSNT(injectFT[F, S] compose f) compose mounted.writeFile[WriteFile](d)
+      // TODO BROKEN reflexive
+      flatMapSNT(injectFTCopK[F, S] compose f) compose /*mounted.writeFile[WriteFile](d)*/ liftFT[WriteFile]
     }
 
     λ[WriteFile ~> M] {
@@ -114,10 +117,10 @@ object hierarchical {
   /** Returns a `ManageFileF` interpreter that selects one of the configured
     * child interpreters based on the path of the incoming request.
     */
-  def manageFile[F[_], S[_]](
+  def manageFile[F[_], S[a] <: ACopK[a]](
     mfs: Mounts[ManageFile ~> F]
   )(implicit
-    S: F :<: S
+    S: F :<<: S
   ): ManageFile ~> Free[S, ?] = {
     import ManageFile._
 
@@ -125,7 +128,8 @@ object hierarchical {
     type MES[A] = EitherT[M, FileSystemError, A]
 
     val mountedMfs = mfs mapWithDir { case (d, f) =>
-      flatMapSNT(injectFT[F, S] compose f) compose mounted.manageFile[ManageFile](d)
+      // TODO BROKEN reflexive
+      flatMapSNT(injectFTCopK[F, S] compose f) compose /*mounted.manageFile[ManageFile](d)*/ liftFT[ManageFile]
     }
 
     val lookup = lookupMounted(mountedMfs, _: APath)
@@ -200,13 +204,13 @@ object hierarchical {
   /** Returns a `QueryFileF` interpreter that selects one of the configured
     * child interpreters based on the path of the incoming request.
     */
-  def queryFile[F[_], S[_]](
+  def queryFile[F[_], S[a] <: ACopK[a]](
     qfs: Mounts[QueryFile ~> F]
   )(
     implicit
-    S1: F :<: S,
-    S2: MonotonicSeq :<: S,
-    S3: MountedResultH :<: S
+    S1: F :<<: S,
+    S2: MonotonicSeq :<<: S,
+    S3: MountedResultH :<<: S
   ): QueryFile ~> Free[S, ?] = {
     import QueryFile._
 
@@ -218,7 +222,8 @@ object hierarchical {
     import transforms._
 
     lazy val mountedQfs = qfs mapWithDir { case (d, f) =>
-      flatMapSNT(injectFT[F, S] compose f) compose mounted.queryFile[QueryFile](d)
+      // TODO BROKEN reflexive
+      flatMapSNT(injectFTCopK[F, S] compose f) compose /*mounted.queryFile[QueryFile](d)*/ liftFT[QueryFile]
     }
 
     def resultForPlan[A](
@@ -278,20 +283,21 @@ object hierarchical {
     }
   }
 
-  def analyze[F[_], S[_]](
+  def analyze[F[_], S[a] <: ACopK[a]](
     afs: Mounts[Analyze ~> F]
   )(
     implicit
-    S1: F :<: S,
-    S2: MonotonicSeq :<: S,
-    S3: MountedResultH :<: S
+    S1: F :<<: S,
+    S2: MonotonicSeq :<<: S,
+    S3: MountedResultH :<<: S
   ): Analyze ~> Free[S, ?] = {
     import Analyze._
 
     type M[A] = Free[S, A]
 
     lazy val mountedAfs = afs mapWithDir { case (d, f) =>
-      flatMapSNT(injectFT[F, S] compose f) compose mounted.analyze[Analyze](d)
+      // TODO BROKEN reflexive
+      flatMapSNT(injectFTCopK[F, S] compose f) compose /*mounted.analyze[Analyze](d)*/ liftFT[Analyze]
     }
 
     λ[Analyze ~> M] {
@@ -303,26 +309,28 @@ object hierarchical {
     }
   }
 
-  def fileSystem[F[_], S[_]](
+  @SuppressWarnings(Array("org.wartremover.warts.StringPlusAny", "org.wartremover.warts.Throw"))
+  def fileSystem[F[_], S[a] <: ACopK[a]](
     mounts: Mounts[FileSystem ~> F]
   )(implicit
-    S1: F :<: S,
-    S2: MountedResultH :<: S,
-    S3: MonotonicSeq :<: S
+    S1: F :<<: S,
+    S2: MountedResultH :<<: S,
+    S3: MonotonicSeq :<<: S
   ): FileSystem ~> Free[S, ?] = {
     type M[A] = Free[S, A]
     type FS[A] = FileSystem[A]
 
-    def injFS[G[_]](implicit I: G :<: FS): G ~> FS = injectNT[G, FS]
+    def injFS[G[_]](implicit I: G :<<: FS): G ~> FS = injectNTCopK[G, FS]
 
     val qf: QueryFile ~> M  = queryFile[F, S](mounts map (_ compose injFS[QueryFile]))
     val rf: ReadFile ~> M   = readFile[F, S](mounts map (_ compose injFS[ReadFile]))
     val wf: WriteFile ~> M  = writeFile[F, S](mounts map (_ compose injFS[WriteFile]))
     val mf: ManageFile ~> M = manageFile[F, S](mounts map (_ compose injFS[ManageFile]))
 
-    qf :+: rf :+: wf :+: mf
+    CopK.NaturalTransformation.of[FileSystem, M](qf, rf, wf, mf)
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.StringPlusAny", "org.wartremover.warts.Throw"))
   def backendEffect[F[_], S[a] <: ACopK[a]](
     mounts: Mounts[BackendEffect ~> F]
   )(implicit
@@ -330,9 +338,20 @@ object hierarchical {
     S2: MountedResultH :<<: S,
     S3: MonotonicSeq :<<: S
   ): BackendEffect ~> Free[S, ?] = {
-    analyze[F, S](mounts map (_ compose injectNTCopK[Analyze, BackendEffect])) :+:
-    fileSystem[F,S](mounts.map(_  compose injectNTCopK[FileSystem, BackendEffect]))
+    type M[A] = Free[S, A]
+    type BE[A] = BackendEffect[A]
+
+    def injBE[G[_]](implicit I: G :<<: BE): G ~> BE = injectNTCopK[G, BE]
+
+    val af: Analyze ~> M    = analyze[F, S](mounts map (_ compose injBE[Analyze]))
+    val qf: QueryFile ~> M  = queryFile[F, S](mounts map (_ compose injBE[QueryFile]))
+    val rf: ReadFile ~> M   = readFile[F, S](mounts map (_ compose injBE[ReadFile]))
+    val wf: WriteFile ~> M  = writeFile[F, S](mounts map (_ compose injBE[WriteFile]))
+    val mf: ManageFile ~> M = manageFile[F, S](mounts map (_ compose injBE[ManageFile]))
+
+    CopK.NaturalTransformation.of[BackendEffect, M](af, qf, rf, wf, mf)
   }
+
 
   ////
 
@@ -401,11 +420,11 @@ object hierarchical {
   }
 
   private object getMounted {
-    final class Aux[S[_]] {
+    final class Aux[S[a] <: ACopK[a]] {
       type F[A] = Free[S, A]
 
       def apply[A, B](a: A, mnts: Mounts[B])
-                     (implicit I: KeyValueStore[A, (ADir, A), ?] :<: S)
+                     (implicit I: KeyValueStore[A, (ADir, A), ?] :<<: S)
                      : OptionT[F, (A, B)] = {
         KeyValueStore.Ops[A, (ADir, A), S].get(a) flatMap { case (d, a1) =>
           OptionT(mnts.lookup(d).strengthL(a1).point[F])
@@ -413,6 +432,6 @@ object hierarchical {
       }
     }
 
-    def apply[S[_]]: Aux[S] = new Aux[S]
+    def apply[S[a] <: ACopK[a]]: Aux[S] = new Aux[S]
   }
 }
