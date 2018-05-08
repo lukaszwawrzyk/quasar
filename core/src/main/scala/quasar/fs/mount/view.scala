@@ -22,7 +22,6 @@ import quasar.contrib.pathy._
 import quasar.contrib.scalaz.eitherT._
 import quasar.effect._
 import quasar.fp._
-import quasar.fp.free._
 import quasar.fp.numeric._
 import quasar.frontend.{SemanticErrors, SemanticErrsT}
 import quasar.fs._, FileSystemError._, PathError._
@@ -46,8 +45,8 @@ object view {
   type State[A] = KeyValueStore[ReadFile.ReadHandle, ResultHandle, A]
 
   object State {
-    def Ops[S[_]](
-      implicit S: State :<: S
+    def Ops[S[a] <: ACopK[a]](
+      implicit S: State :<<: S
     ): KeyValueStore.Ops[ReadFile.ReadHandle, ResultHandle, S] =
       KeyValueStore.Ops[ReadFile.ReadHandle, ResultHandle, S]
 
@@ -61,14 +60,14 @@ object view {
   private val lpr = optimizer.lpr
 
   /** Translate reads on view paths to the equivalent queries. */
-  def readFile[S[_]](
+  def readFile[S[a] <: ACopK[a]](
     implicit
-    S0: ReadFile :<: S,
-    S1: QueryFile :<: S,
-    S2: MonotonicSeq :<: S,
-    S3: State :<: S,
-    S4: VCacheKVS :<: S,
-    S5: Mounting :<: S
+    S0: ReadFile :<<: S,
+    S1: QueryFile :<<: S,
+    S2: MonotonicSeq :<<: S,
+    S3: State :<<: S,
+    S4: VCacheKVS :<<: S,
+    S5: Mounting :<<: S
   ): ReadFile ~> Free[S, ?] = {
     import ReadFile._
 
@@ -117,10 +116,10 @@ object view {
   }
 
   /** Intercept and fail any write to a view path; all others are passed untouched. */
-  def writeFile[S[_]](
+  def writeFile[S[a] <: ACopK[a]](
     implicit
-    S0: WriteFile :<: S,
-    S1: Mounting :<: S
+    S0: WriteFile :<<: S,
+    S1: Mounting :<<: S
   ): WriteFile ~> Free[S, ?] = {
     val mount = Mounting.Ops[S]
     nonFsMounts.failSomeWrites(
@@ -130,11 +129,11 @@ object view {
 
   /** Intercept and resolve queries involving views, and overlay views when
     * enumerating files and directories. */
-  def queryFile[S[_]](
+  def queryFile[S[a] <: ACopK[a]](
     implicit
-    S0: QueryFile :<: S,
-    S1: VCacheKVS :<: S,
-    S2: Mounting :<: S
+    S0: QueryFile :<<: S,
+    S1: VCacheKVS :<<: S,
+    S2: Mounting :<<: S
   ): QueryFile ~> Free[S, ?] = {
     import QueryFile._
 
@@ -186,8 +185,21 @@ object view {
     }
   }
 
-  def analyze[S[_]](implicit
-    S0: VCacheKVS :<: S,
+  def manageFile[S[a] <: ACopK[a]](
+    implicit
+    S0: ManageFile :<<: S,
+    S1: QueryFile :<<: S,
+    S2: Mounting :<<: S,
+    S3: MountingFailure :<<: S,
+    S4: PathMismatchFailure :<<: S,
+    S5: VCacheKVS.Ops[S]
+  ): ManageFile ~> Free[S, ?] = {
+    val mount = Mounting.Ops[S]
+    nonFsMounts.manageFile(dir => mount.viewsHavingPrefix_(dir).map(paths => paths.map(p => (p:RPath))))
+  }
+
+  def analyze[S[a] <: ACopK[a]](implicit
+    S0: VCacheKVS :<<: S,
     M: Mounting.Ops[S],
     A: Analyze.Ops[S]
   ): Analyze ~> Free[S, ?] = new (Analyze ~> Free[S, ?]) {
@@ -203,44 +215,43 @@ object view {
     * on an underlying filesystem, where references to views have been
     * rewritten as queries against actual files.
     */
-  def fileSystem[S[_]](
+  def fileSystem[S[a] <: ACopK[a]](
     implicit
-    S0: ReadFile :<: S,
-    S1: WriteFile :<: S,
-    S2: ManageFile :<: S,
-    S3: QueryFile :<: S,
-    S4: MonotonicSeq :<: S,
-    S5: State :<: S,
-    S6: VCacheKVS :<: S,
-    S7: Mounting :<: S,
-    S8: MountingFailure :<: S,
-    S9: PathMismatchFailure :<: S
+    S0: ReadFile :<<: S,
+    S1: WriteFile :<<: S,
+    S2: ManageFile :<<: S,
+    S3: QueryFile :<<: S,
+    S4: MonotonicSeq :<<: S,
+    S5: State :<<: S,
+    S6: VCacheKVS :<<: S,
+    S7: Mounting :<<: S,
+    S8: MountingFailure :<<: S,
+    S9: PathMismatchFailure :<<: S
   ): FileSystem ~> Free[S, ?] = {
-    val mount = Mounting.Ops[S]
-    val manageFile = nonFsMounts.manageFile(dir => mount.viewsHavingPrefix_(dir).map(paths => paths.map(p => (p:RPath))))
     interpretFileSystem[Free[S, ?]](queryFile, readFile, writeFile, manageFile)
   }
 
-  def backendEffect[S[_]](
+  def backendEffect[S[a] <: ACopK[a]](
     implicit
-    S0: ReadFile :<: S,
-    S1: WriteFile :<: S,
-    S2: ManageFile :<: S,
-    S3: QueryFile :<: S,
-    S4: MonotonicSeq :<: S,
-    S5: State :<: S,
-    S6: VCacheKVS :<: S,
-    S7: Mounting :<: S,
-    S8: MountingFailure :<: S,
-    S9: PathMismatchFailure :<: S,
-    S10: Analyze :<: S
-  ): BackendEffect ~> Free[S, ?] = analyze :+: fileSystem[S]
+    S0: ReadFile :<<: S,
+    S1: WriteFile :<<: S,
+    S2: ManageFile :<<: S,
+    S3: QueryFile :<<: S,
+    S4: MonotonicSeq :<<: S,
+    S5: State :<<: S,
+    S6: VCacheKVS :<<: S,
+    S7: Mounting :<<: S,
+    S8: MountingFailure :<<: S,
+    S9: PathMismatchFailure :<<: S,
+    S10: Analyze :<<: S
+  ): BackendEffect ~> Free[S, ?] =
+    interpretBackendEffect[Free[S, ?]](analyze, queryFile, readFile, writeFile, manageFile)
 
   /** Resolve view references in the given `LP`. */
-  def resolveViewRefs[S[_]](
+  def resolveViewRefs[S[a] <: ACopK[a]](
     plan: Fix[LP]
   )(implicit
-    S0: VCacheKVS :<: S,
+    S0: VCacheKVS :<<: S,
     M: Mounting.Ops[S]
   ): FileSystemErrT[Free[S, ?], Fix[LP]] = {
     val VC = VCacheKVS.Ops[S]

@@ -32,7 +32,7 @@ import scalaz.{Failure => _, Node => _, _}, Scalaz._
 package object module {
   import MountConfig.{ModuleConfig, moduleConfig}
 
-  private def moduleAncestor[S[_]](f: AFile)(implicit S: Mounting :<: S): Free[S, Option[ModuleConfig]] = {
+  private def moduleAncestor[S[a] <: ACopK[a]](f: AFile)(implicit S: Mounting :<<: S): Free[S, Option[ModuleConfig]] = {
     val mount = Mounting.Ops[S]
 
     val dirs =
@@ -52,10 +52,10 @@ package object module {
   }
 
   /** Intercept and fail any read to a module path; all others are passed untouched. */
-  def readFile[S[_]](
+  def readFile[S[a] <: ACopK[a]](
     implicit
-    S0: ReadFile :<: S,
-    S4: Mounting :<: S
+    S0: ReadFile :<<: S,
+    S4: Mounting :<<: S
   ): ReadFile ~> Free[S, ?] = {
     import ReadFile._
 
@@ -76,20 +76,20 @@ package object module {
   }
 
   /** Intercept and fail any write to a module path; all others are passed untouched. */
-  def writeFile[S[_]](
+  def writeFile[S[a] <: ACopK[a]](
     implicit
-    S0: WriteFile :<: S,
-    S1: Mounting :<: S
+    S0: WriteFile :<<: S,
+    S1: Mounting :<<: S
   ): WriteFile ~> Free[S, ?] =
     nonFsMounts.failSomeWrites(
       on = file => OptionT(moduleAncestor(file)).isDefined,
       message = "Cannot write to a module.")
 
   /** Overlay modules when enumerating files and directories. */
-  def queryFile[S[_]](
+  def queryFile[S[a] <: ACopK[a]](
     implicit
-    S0: QueryFile :<: S,
-    S1: Mounting :<: S
+    S0: QueryFile :<<: S,
+    S1: Mounting :<<: S
   ): QueryFile ~> Free[S, ?] = {
     import QueryFile._
 
@@ -146,14 +146,14 @@ package object module {
     }
   }
 
-  def manageFile[S[_]](
+  def manageFile[S[a] <: ACopK[a]](
     implicit
     VC: VCacheKVS.Ops[S],
-    S0: ManageFile :<: S,
-    S1: QueryFile :<: S,
-    S2: Mounting :<: S,
-    S3: MountingFailure :<: S,
-    S4: PathMismatchFailure :<: S
+    S0: ManageFile :<<: S,
+    S1: QueryFile :<<: S,
+    S2: Mounting :<<: S,
+    S3: MountingFailure :<<: S,
+    S4: PathMismatchFailure :<<: S
   ): ManageFile ~> Free[S, ?] = {
     val mount = Mounting.Ops[S]
 
@@ -163,31 +163,31 @@ package object module {
     }
   }
 
-  def fileSystem[S[_]](
+  def fileSystem[S[a] <: ACopK[a]](
     implicit
-    S0: ReadFile :<: S,
-    S1: WriteFile :<: S,
-    S2: ManageFile :<: S,
-    S3: QueryFile :<: S,
-    S6: VCacheKVS :<: S,
-    S7: Mounting :<: S,
-    S8: MountingFailure :<: S,
-    S9: PathMismatchFailure :<: S
+    S0: ReadFile :<<: S,
+    S1: WriteFile :<<: S,
+    S2: ManageFile :<<: S,
+    S3: QueryFile :<<: S,
+    S6: VCacheKVS :<<: S,
+    S7: Mounting :<<: S,
+    S8: MountingFailure :<<: S,
+    S9: PathMismatchFailure :<<: S
   ): FileSystem ~> Free[S, ?] =
     interpretFileSystem[Free[S, ?]](queryFile, readFile, writeFile, manageFile)
 
   // FIXME
-  def backendEffect[S[_]](
+  def backendEffect[S[a] <: ACopK[a]](
     implicit
-    S0: ReadFile :<: S,
-    S1: WriteFile :<: S,
-    S2: ManageFile :<: S,
-    S3: QueryFile :<: S,
-    S6: VCacheKVS :<: S,
-    S7: Mounting :<: S,
-    S8: MountingFailure :<: S,
-    S9: PathMismatchFailure :<: S,
-    S10: Analyze :<: S
+    S0: ReadFile :<<: S,
+    S1: WriteFile :<<: S,
+    S2: ManageFile :<<: S,
+    S3: QueryFile :<<: S,
+    S6: VCacheKVS :<<: S,
+    S7: Mounting :<<: S,
+    S8: MountingFailure :<<: S,
+    S9: PathMismatchFailure :<<: S,
+    S10: Analyze :<<: S
   ): BackendEffect ~> Free[S, ?] =
-    injectFT[Analyze, S] :+: fileSystem[S]
+    interpretBackendEffect[Free[S, ?]](injectFTCopK[Analyze, S], queryFile, readFile, writeFile, manageFile)
 }

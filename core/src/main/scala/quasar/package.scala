@@ -79,13 +79,13 @@ package object quasar {
       rewritten   <- phase("Rewritten Joins", optimizer.rewriteJoins(typechecked).right)
     } yield rewritten
 
-  def resolveImports[S[_]](scopedExpr: ScopedExpr[Fix[Sql]], baseDir: ADir)(implicit
+  def resolveImports[S[a] <: ACopK[a]](scopedExpr: ScopedExpr[Fix[Sql]], baseDir: ADir)(implicit
     mount: Mounting.Ops[S],
     fsFail: Failure.Ops[FileSystemError, S]
   ): EitherT[Free[S, ?], SemanticError, Fix[Sql]] =
     EitherT(fsFail.unattemptT(resolveImports_(scopedExpr, baseDir).run))
 
-  def resolveImports_[S[_]](scopedExpr: ScopedExpr[Fix[Sql]], baseDir: ADir)(implicit
+  def resolveImports_[S[a] <: ACopK[a]](scopedExpr: ScopedExpr[Fix[Sql]], baseDir: ADir)(implicit
     mount: Mounting.Ops[S]
   ): EitherT[FileSystemErrT[Free[S, ?], ?], SemanticError, Fix[Sql]] =
     resolveImportsImpl[EitherT[FileSystemErrT[Free[S, ?], ?], SemanticError, ?], Fix](

@@ -21,6 +21,7 @@ import quasar.fp.free.lift
 import quasar.fp.ski._
 import quasar.fs.mount._
 import quasar.contrib.pathy.{ADir, APath}
+import quasar.fp.{:<<:, ACopK}
 
 import doobie.imports._
 import scalaz._, Scalaz._
@@ -32,12 +33,12 @@ object MetaStoreMounter {
     * to handle mount and unmount requests, and the `Mounts` table as the
     * `PathStore`.
     */
-  def apply[F[_], S[_]](
+  def apply[F[_], S[a] <: ACopK[a]](
     mount: MountRequest => F[MountingError \/ Unit],
     unmount: MountRequest => F[Unit]
   )(implicit
-    S0: F :<: S,
-    S1: ConnectionIO :<: S
+    S0: F :<<: S,
+    S1: ConnectionIO :<<: S
   ): Mounting ~> Free[S, ?] = {
     Mounter[Free[S, ?]](
       req => EitherT(lift(mount(req)).into[S]),

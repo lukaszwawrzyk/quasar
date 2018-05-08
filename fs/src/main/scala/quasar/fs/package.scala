@@ -36,7 +36,8 @@ package object fs extends PhysicalErrorPrisms {
   private type FileSystemList = QueryFile ::: ReadFile ::: WriteFile ::: ManageFile ::: TNilK
   type FileSystem[A] = CopK[FileSystemList, A]
 
-  type BackendEffect[A] = CopK[Analyze ::: FileSystemList, A]
+  type BackendEffectList = Analyze ::: FileSystemList
+  type BackendEffect[A] = CopK[BackendEffectList, A]
 
   type FileSystemFailure[A] = Failure[FileSystemError, A]
   type FileSystemErrT[F[_], A] = EitherT[F, FileSystemError, A]

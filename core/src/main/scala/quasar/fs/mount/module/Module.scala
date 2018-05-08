@@ -25,6 +25,7 @@ import quasar.effect.{Failure, LiftedOps}
 import quasar.fs._
 import quasar.fs.mount._
 import quasar.sql._
+import quasar.fp.{:<<:, ACopK}
 
 import matryoshka.data.Fix
 import matryoshka.implicits._
@@ -91,7 +92,7 @@ object Module {
   /** Low-level, unsafe operations. Clients are responsible for resource-safety
     * when using these.
     */
-  final class Unsafe[S[_]](implicit S: Module :<: S)
+  final class Unsafe[S[a] <: ACopK[a]](implicit S: Module :<<: S)
     extends LiftedOps[Module, S] {
 
     type M[A] = ErrorT[FreeS, A]
@@ -117,11 +118,11 @@ object Module {
   }
 
   object Unsafe {
-    implicit def apply[S[_]](implicit S: Module :<: S): Unsafe[S] =
+    implicit def apply[S[a] <: ACopK[a]](implicit S: Module :<<: S): Unsafe[S] =
       new Unsafe[S]
   }
 
-  final class Ops[S[_]](implicit val unsafe: Unsafe[S]) {
+  final class Ops[S[a] <: ACopK[a]](implicit val unsafe: Unsafe[S]) {
     type M[A] = unsafe.M[A]
 
     /** Returns the result of evaluating the function specified by the file path provided with the supplied
@@ -147,7 +148,7 @@ object Module {
     }
 
     def invokeFunction_(path: AFile, args: Map[String, Fix[Sql]], offset: Natural, limit: Option[Positive])(implicit
-      SO: Failure :<: S
+      SO: Failure :<<: S
     ): Process[Free[S, ?], Data] = {
       val nat: M ~> Free[S, ?] = λ[M ~> Free[S, ?]] { x => Failure.Ops[Error, S].unattempt(x.run) }
       invokeFunction(path, args, offset, limit).translate(nat)
@@ -156,7 +157,7 @@ object Module {
   }
 
   object Ops {
-    implicit def apply[S[_]](implicit S: Module :<: S): Ops[S] =
+    implicit def apply[S[a] <: ACopK[a]](implicit S: Module :<<: S): Ops[S] =
       new Ops[S]
   }
 
@@ -166,7 +167,7 @@ object Module {
     import FileSystemError._
     import PathError._
 
-    def default[S[_]](implicit query: QueryFile.Unsafe[S], mount: Mounting.Ops[S]): Module ~> Free[S, ?] =
+    def default[S[a] <: ACopK[a]](implicit query: QueryFile.Unsafe[S], mount: Mounting.Ops[S]): Module ~> Free[S, ?] =
       λ[Module ~> Free[S, ?]] {
         case InvokeModuleFunction(file, args, offset, limit) =>
           val notFoundError = fsError(pathErr(pathNotFound(file)))

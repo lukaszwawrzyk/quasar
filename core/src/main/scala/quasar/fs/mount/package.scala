@@ -16,12 +16,14 @@
 
 package quasar.fs
 
-import slamdata.Predef.Vector
+import slamdata.Predef.{Vector, SuppressWarnings, Array}
 import quasar.contrib.pathy._
 import quasar.Data
 import quasar.effect._
 import quasar.fp._, free._
 import quasar.fs.mount.cache.VCache.VCacheKVS
+import iotaz.CopK
+import iotaz.TListK.:::
 
 import scalaz.{Failure => _, _}
 import scalaz.concurrent.Task
@@ -76,25 +78,27 @@ package object mount {
       mounting :+: mismatchFailure :+: mountingFailure :+: viewState :+: vcache :+: monotonicSeq :+: fileSystem
   }
 
-  def overlayModulesViews[S[_], T[_]](
+  // TODO this is totally broken unable to construct ~> because of already combined interpreter for BE; unable to nested inject
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  def overlayModulesViews[S[a] <: ACopK[a], T[_]](
     f: BackendEffect ~> Free[T, ?]
   )(implicit
-    S0: T :<: S,
-    S1: Task :<: S,
-    S2: VCacheKVS :<: S,
-    S3: Mounting :<: S,
-    S4: MountingFailure :<: S,
-    S5: PathMismatchFailure :<: S
+    S0: T :<<: S,
+    S1: Task :<<: S,
+    S2: VCacheKVS :<<: S,
+    S3: Mounting :<<: S,
+    S4: MountingFailure :<<: S,
+    S5: PathMismatchFailure :<<: S
   ): Task[BackendEffect ~> Free[S, ?]] = {
-    type V[A] = (
-      constantPlans.State :\:
-      VCacheKVS           :\:
-      view.State          :\:
-      MonotonicSeq        :\:
-      Mounting            :\:
-      MountingFailure     :\:
-      PathMismatchFailure :/:
-      BackendEffect)#M[A]
+    type V[A] = CopK[
+      constantPlans.State :::
+      VCacheKVS           :::
+      view.State          :::
+      MonotonicSeq        :::
+      Mounting            :::
+      MountingFailure     :::
+      PathMismatchFailure :::
+      BackendEffectList,   A]
 
     for {
       startSeq <- Task.delay(scala.util.Random.nextInt.toLong)
@@ -102,15 +106,16 @@ package object mount {
       viewKvs  <- KeyValueStore.impl.default[ReadFile.ReadHandle, view.ResultHandle]
       constKvs <- KeyValueStore.impl.default[QueryFile.ResultHandle, Vector[Data]]
     } yield {
-      val compFs: V ~> Free[S, ?] =
-        injectFT[Task, S].compose(constKvs)                                 :+:
-        injectFT[VCacheKVS, S]                                              :+:
-        injectFT[Task, S].compose(viewKvs)                                  :+:
-        injectFT[Task, S].compose(seq)                                      :+:
-        injectFT[Mounting, S]                                               :+:
-        injectFT[MountingFailure, S]                                        :+:
-        injectFT[PathMismatchFailure, S]                                    :+:
-        (foldMapNT(injectFT[T, S]) compose f)
+      λ[BackendEffect ~> Free[S, ?]](_ => null)
+      /*val compFs: V ~> Free[S, ?] = CopK.NaturalTransformation.of[V, Free[S, ?]](
+        injectFTCopK[Task, S].compose(constKvs),
+        injectFTCopK[VCacheKVS, S],
+        injectFTCopK[Task, S].compose(viewKvs),
+        injectFTCopK[Task, S].compose(seq),
+        injectFTCopK[Mounting, S],
+        injectFTCopK[MountingFailure, S],
+        injectFTCopK[PathMismatchFailure, S],
+        foldMapNT(injectFTCopK[T, S]) compose f)
 
       flatMapSNT(compFs) compose
         // The constant plan interpreter should appear last before the actual filesystem
@@ -118,7 +123,7 @@ package object mount {
         // involved
         flatMapSNT(transformIn[QueryFile, V, Free[V, ?]](constantPlans.queryFile[V], liftFT)) compose
         flatMapSNT(transformIn[BackendEffect, V, Free[V, ?]](module.backendEffect[V], liftFT)) compose
-        view.backendEffect[V]
+        view.backendEffect[V]*/
     }
   }
 }

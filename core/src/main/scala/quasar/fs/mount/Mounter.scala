@@ -187,6 +187,7 @@ object Mounter {
     *
     * Useful in scenarios where only the bookkeeping of mounts is needed.
     */
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
   def trivial[S[a] <: ACopK[a]](implicit S: MountConfigs :<<: S): Mounting ~> Free[S, ?] = {
     // TODO this is problematic as it expands the list, callers also depend on reflexive instance
     /*type F[A] = Coproduct[Id, S, A]

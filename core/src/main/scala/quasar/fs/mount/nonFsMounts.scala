@@ -36,14 +36,14 @@ object nonFsMounts {
   private val lpr = optimizer.lpr
 
   /** Intercept and handle moves and deletes involving view path(s); all others are passed untouched. */
-  def manageFile[S[_]](mountsIn: ADir => Free[S, Set[RPath]])(
+  def manageFile[S[a] <: ACopK[a]](mountsIn: ADir => Free[S, Set[RPath]])(
     implicit
     VC: VCacheKVS.Ops[S],
-    S0: ManageFile :<: S,
-    S1: QueryFile :<: S,
-    S2: Mounting :<: S,
-    S3: MountingFailure :<: S,
-    S4: PathMismatchFailure :<: S
+    S0: ManageFile :<<: S,
+    S1: QueryFile :<<: S,
+    S2: Mounting :<<: S,
+    S3: MountingFailure :<<: S,
+    S4: PathMismatchFailure :<<: S
   ): ManageFile ~> Free[S, ?] = {
     import ManageFile._
     import MoveSemantics._
@@ -219,10 +219,10 @@ object nonFsMounts {
   }
 
   /** Intercept and fail any write to a module path; all others are passed untouched. */
-  def failSomeWrites[S[_]](on: AFile => Free[S, Boolean], message: String)(
+  def failSomeWrites[S[a] <: ACopK[a]](on: AFile => Free[S, Boolean], message: String)(
                        implicit
-                       S0: WriteFile :<: S,
-                       S1: Mounting :<: S
+                       S0: WriteFile :<<: S,
+                       S1: Mounting :<<: S
                      ): WriteFile ~> Free[S, ?] = {
     import WriteFile._
 
@@ -241,7 +241,7 @@ object nonFsMounts {
 
   ////
 
-  private def vcacheGet[S[_]](p: APath)(implicit VC: VCacheKVS.Ops[S]): OptionT[Free[S, ?], AFile] =
+  private def vcacheGet[S[a] <: ACopK[a]](p: APath)(implicit VC: VCacheKVS.Ops[S]): OptionT[Free[S, ?], AFile] =
     OptionT(maybeFile(p).η[Free[S, ?]]) >>= (f => VC.get(f).as(f))
 
 }
