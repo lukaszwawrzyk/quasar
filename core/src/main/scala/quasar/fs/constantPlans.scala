@@ -26,6 +26,7 @@ import quasar.frontend.logicalplan.{Constant, LogicalPlan}
 import matryoshka.data.Fix
 import matryoshka.implicits._
 import scalaz._, Scalaz._
+import quasar.fp.{:<<:, ACopK}
 
 object constantPlans {
 
@@ -41,10 +42,10 @@ object constantPlans {
   val constantPhase =
     PhaseResult.detail("Intercept Constant", "This plan is constant and can be evaluated in memory")
 
-  def queryFile[S[_]](
+  def queryFile[S[a] <: ACopK[a]](
     implicit
-    S0: QueryFile :<: S,
-    S1: ManageFile :<: S,
+    S0: QueryFile :<<: S,
+    S1: ManageFile :<<: S,
     seq: MonotonicSeq.Ops[S],
     write: WriteFile.Ops[S],
     state: KeyValueStore.Ops[QueryFile.ResultHandle, Vector[Data], S]

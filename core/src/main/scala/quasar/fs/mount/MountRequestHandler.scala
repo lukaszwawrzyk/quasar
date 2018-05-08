@@ -20,6 +20,7 @@ import slamdata.Predef._
 import quasar.effect._
 import quasar.fs.BackendEffect
 import hierarchical.MountedResultH
+import quasar.fp.{:<<:, ACopK}
 
 import eu.timepit.refined.auto._
 import monocle.function.Field1
@@ -31,28 +32,28 @@ import scalaz._, Scalaz._
   * @tparam F the base effect that `FileSystem` operations are translated into
   * @tparam S the composite effect, supporting the base and hierarchical effects
   */
-final class MountRequestHandler[F[_], S[_]](
+final class MountRequestHandler[F[_], S[a] <: ACopK[a]](
   fsDef: BackendDef[F]
 )(implicit
-  S0: F :<: S,
-  S1: MountedResultH :<: S,
-  S2: MonotonicSeq :<: S
+  S0: F :<<: S,
+  S1: MountedResultH :<<: S,
+  S2: MonotonicSeq :<<: S
 ) {
   import MountRequest._
 
   type HierarchicalFsRef[A] = AtomicRef[BackendEffect ~> Free[S, ?], A]
 
   object HierarchicalFsRef {
-    def Ops[G[_]](implicit G: HierarchicalFsRef :<: G) =
+    def Ops[G[a] <: ACopK[a]](implicit G: HierarchicalFsRef :<<: G) =
       AtomicRef.Ops[BackendEffect ~> Free[S, ?], G]
   }
 
-  def mount[T[_]](
+  def mount[T[a] <: ACopK[a]](
     req: MountRequest
   )(implicit
-    T0: F :<: T,
-    T1: fsm.MountedFsRef :<: T,
-    T2: HierarchicalFsRef :<: T,
+    T0: F :<<: T,
+    T1: fsm.MountedFsRef :<<: T,
+    T2: HierarchicalFsRef :<<: T,
     F: Monad[F]
   ): Free[T, MountingError \/ Unit] = {
     val handleMount: MntErrT[Free[T, ?], Unit] =
@@ -69,12 +70,12 @@ final class MountRequestHandler[F[_], S[_]](
     (handleMount *> updateHierarchy[T].liftM[MntErrT]).run
   }
 
-  def unmount[T[_]](
+  def unmount[T[a] <: ACopK[a]](
     req: MountRequest
   )(implicit
-    T0: F :<: T,
-    T1: fsm.MountedFsRef :<: T,
-    T2: HierarchicalFsRef :<: T
+    T0: F :<<: T,
+    T1: fsm.MountedFsRef :<<: T,
+    T2: HierarchicalFsRef :<<: T
   ): Free[T, Unit] =
     fsDir.getOption(req).traverse_(fsm.unmount[T]) *> updateHierarchy[T]
 
@@ -98,11 +99,11 @@ final class MountRequestHandler[F[_], S[_]](
     *
     *   4. Store the result of (3) in `HierarchicalFsRef`.
     */
-  private def updateHierarchy[T[_]](
+  private def updateHierarchy[T[a] <: ACopK[a]](
     implicit
-    T0: F :<: T,
-    T1: fsm.MountedFsRef :<: T,
-    T2: HierarchicalFsRef :<: T
+    T0: F :<<: T,
+    T1: fsm.MountedFsRef :<<: T,
+    T2: HierarchicalFsRef :<<: T
   ): Free[T, Unit] =
     for {
       mnted <- fsm.MountedFsRef.Ops[T].get ∘
@@ -112,12 +113,12 @@ final class MountRequestHandler[F[_], S[_]](
 }
 
 object MountRequestHandler {
-  def apply[F[_], S[_]](
+  def apply[F[_], S[a] <: ACopK[a]](
     fsDef: BackendDef[F]
   )(implicit
-    S0: F :<: S,
-    S1: MountedResultH :<: S,
-    S2: MonotonicSeq :<: S
+    S0: F :<<: S,
+    S1: MountedResultH :<<: S,
+    S2: MonotonicSeq :<<: S
   ): MountRequestHandler[F, S] =
     new MountRequestHandler[F, S](fsDef)
 }

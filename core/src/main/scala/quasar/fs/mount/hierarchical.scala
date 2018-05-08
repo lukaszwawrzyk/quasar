@@ -24,6 +24,7 @@ import quasar.effect._
 import quasar.fp.free._
 import quasar.fs._
 import quasar.frontend.{logicalplan => lp}, lp.LogicalPlan
+import quasar.fp.{:<<:, ACopK}
 
 import matryoshka._
 import matryoshka.data.Fix
@@ -322,15 +323,15 @@ object hierarchical {
     qf :+: rf :+: wf :+: mf
   }
 
-  def backendEffect[F[_], S[_]](
+  def backendEffect[F[_], S[a] <: ACopK[a]](
     mounts: Mounts[BackendEffect ~> F]
   )(implicit
-    S1: F :<: S,
-    S2: MountedResultH :<: S,
-    S3: MonotonicSeq :<: S
+    S1: F :<<: S,
+    S2: MountedResultH :<<: S,
+    S3: MonotonicSeq :<<: S
   ): BackendEffect ~> Free[S, ?] = {
-    analyze[F, S](mounts map (_ compose Inject[Analyze, BackendEffect])) :+:
-    fileSystem[F,S](mounts.map(_  compose Inject[FileSystem, BackendEffect]))
+    analyze[F, S](mounts map (_ compose injectNTCopK[Analyze, BackendEffect])) :+:
+    fileSystem[F,S](mounts.map(_  compose injectNTCopK[FileSystem, BackendEffect]))
   }
 
   ////

@@ -22,6 +22,7 @@ import quasar.fp.numeric._
 import quasar.effect.AtomicRef
 import quasar.fs.{FileSystemType, PathError}
 import quasar.fp.free
+import quasar.fp.{:<<:, ACopK}
 
 import scalaz._
 import scalaz.syntax.monad._
@@ -33,16 +34,16 @@ final class FileSystemMountHandler[F[_]](fsDef: BackendDef[F]) {
   type MountedFsRef[A] = AtomicRef[Mounts[DefinitionResult[F]], A]
 
   object MountedFsRef {
-    def Ops[S[_]](implicit S: MountedFsRef :<: S) =
+    def Ops[S[a] <: ACopK[a]](implicit S: MountedFsRef :<<: S) =
       AtomicRef.Ops[Mounts[DefinitionResult[F]], S]
   }
 
   /** Attempts to mount a filesystem at the given location, using the provided
     * definition.
     */
-  def mount[S[_]]
+  def mount[S[a] <: ACopK[a]]
       (loc: ADir, typ: FileSystemType, uri: ConnectionUri)
-      (implicit S0: F :<: S, S1: MountedFsRef :<: S, F: Monad[F])
+      (implicit S0: F :<<: S, S1: MountedFsRef :<<: S, F: Monad[F])
       : Free[S, MountingError \/ Unit] = {
 
     type M[A] = Free[S, A]
@@ -73,9 +74,9 @@ final class FileSystemMountHandler[F[_]](fsDef: BackendDef[F]) {
     (failUnlessCandidate *> createFs).flatMap(addMount).run
   }
 
-  def unmount[S[_]]
+  def unmount[S[a] <: ACopK[a]]
       (loc: ADir)
-      (implicit S0: F :<: S, S1: MountedFsRef :<: S)
+      (implicit S0: F :<<: S, S1: MountedFsRef :<<: S)
       : Free[S, Unit] = {
 
     MountedFsRef.Ops[S].modifyS(mnts => (mnts - loc, cleanup[S](mnts, loc))).join
@@ -83,9 +84,9 @@ final class FileSystemMountHandler[F[_]](fsDef: BackendDef[F]) {
 
   ////
 
-  private def cleanup[S[_]]
+  private def cleanup[S[a] <: ACopK[a]]
               (mnts: Mounts[DefinitionResult[F]], loc: ADir)
-              (implicit S: F :<: S)
+              (implicit S: F :<<: S)
               : Free[S, Unit] = {
 
     mnts.lookup(loc).map(_.close)

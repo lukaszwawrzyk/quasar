@@ -148,12 +148,12 @@ object Mounter {
     * @param mount   Called to handle a mount request.
     * @param unmount Called to handle the removal/undoing of a mount request.
     */
-  def kvs[F[_], S[_]](
+  def kvs[F[_], S[a] <: ACopK[a]](
     mount: MountRequest => F[MountingError \/ Unit],
     unmount: MountRequest => F[Unit]
   )(implicit
-    S0: F :<: S,
-    S1: MountConfigs :<: S
+    S0: F :<<: S,
+    S1: MountConfigs :<<: S
   ): Mounting ~> Free[S, ?] = {
     val mountConfigs = KeyValueStore.Ops[APath, MountConfig, S]
 
@@ -187,11 +187,14 @@ object Mounter {
     *
     * Useful in scenarios where only the bookkeeping of mounts is needed.
     */
-  def trivial[S[_]](implicit S: MountConfigs :<: S): Mounting ~> Free[S, ?] = {
-    type F[A] = Coproduct[Id, S, A]
+  def trivial[S[a] <: ACopK[a]](implicit S: MountConfigs :<<: S): Mounting ~> Free[S, ?] = {
+    // TODO this is problematic as it expands the list, callers also depend on reflexive instance
+    /*type F[A] = Coproduct[Id, S, A]
     val mnt   = Mounter.kvs[Id, F](κ(().right), κ(()))
 
-    λ[Mounting ~> Free[S, ?]](m => mnt(m) foldMap (pointNT[Free[S, ?]] :+: liftFT[S]))
+    λ[Mounting ~> Free[S, ?]](m => mnt(m) foldMap (pointNT[Free[S, ?]] :+: liftFT[S]))*/
+    val mnt   = Mounter.kvs[Id, S](κ(().right), κ(()))(null, null)
+    λ[Mounting ~> Free[S, ?]](m => mnt(m) foldMap liftFT[S])
   }
 
   private val pathNotFound = MountingError.pathError composePrism PathError.pathNotFound
