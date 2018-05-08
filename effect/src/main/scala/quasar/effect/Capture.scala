@@ -20,6 +20,7 @@ import slamdata.Predef._
 
 import scalaz._, concurrent.Task
 import scalaz.syntax.monad._
+import quasar.fp.{:<<:, ACopK}
 
 /** Monad with effect-capturing unit.
   *
@@ -71,6 +72,9 @@ sealed abstract class CaptureInstances0 {
 
   implicit def writerTCapture[F[_]: Monad: Capture, W: Monoid]: Capture[WriterT[F, W, ?]] =
     new TransCapture[F, WriterT[?[_], W, ?]]
+
+  implicit def freeCaptureCopK[F[_]: Capture, S[a] <: ACopK[a]](implicit I: F :<<: S): Capture[Free[S, ?]] =
+    new FreeCaptureCopK[F, S]
 }
 
 private[effect] class TaskCapture extends Capture[Task] {
@@ -83,6 +87,11 @@ private[effect] class TransCapture[F[_]: Monad: Capture, T[_[_], _]: MonadTrans]
 }
 
 private[effect] class FreeCapture[F[_], S[_]](implicit F: Capture[F], I: F :<: S)
+  extends Capture[Free[S, ?]] {
+  def capture[A](a: => A) = Free.liftF(I(F.capture(a)))
+}
+
+private[effect] class FreeCaptureCopK[F[_], S[a] <: ACopK[a]](implicit F: Capture[F], I: F :<<: S)
   extends Capture[Free[S, ?]] {
   def capture[A](a: => A) = Free.liftF(I(F.capture(a)))
 }

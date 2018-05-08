@@ -39,8 +39,8 @@ import com.marklogic.xcc.exceptions._
 import com.marklogic.xcc.{ContentSource, Session}
 import scalaz.{Failure => _, _}, Scalaz.{ToIdOps => _, _}
 import scalaz.concurrent.Task
+import iotaz.{CopK, TNilK}
 import iotaz.TListK.:::
-import iotaz.TNilK
 
 package object fs {
   import ReadFile.ReadHandle, WriteFile.WriteHandle, QueryFile.ResultHandle
@@ -50,12 +50,14 @@ package object fs {
   type XccSessionR[A]       = Read[Session, A]
   type XccContentSourceR[A] = Read[ContentSource, A]
 
-  type XccEvalEff[A] = (
-        Task
-    :\: MonotonicSeq
-    :\: XccSessionR
-    :/: XccContentSourceR
-  )#M[A]
+  type XccEvalEffList =
+    Task              :::
+    MonotonicSeq      :::
+    XccSessionR       :::
+    XccContentSourceR :::
+    TNilK
+
+  type XccEvalEff[A] = CopK[XccEvalEffList, A]
 
   type XccEval[A]         = MarkLogicPlanErrT[PrologT[Free[XccEvalEff, ?], ?], A]
   type XccDataStream      = DataStream[XccEval]
@@ -64,13 +66,13 @@ package object fs {
   type MLResultHandles[A] = KeyValueStore[ResultHandle, XccDataStream, A]
   type MLWriteHandles[A]  = KeyValueStore[WriteHandle, AFile, A]
 
-  type MarkLogicFs[A] = (
-        GenUUID
-    :\: MLReadHandles
-    :\: MLResultHandles
-    :\: MLWriteHandles
-    :/: XccEvalEff
-  )#M[A]
+  type MarkLogicFs[A] = CopK[
+    GenUUID         :::
+    MLReadHandles   :::
+    MLResultHandles :::
+    MLWriteHandles  :::
+    XccEvalEffList,
+    A]
 
   implicit val xccSessionR  = quasar.effect.Read.monadReader_[Session, XccEvalEff]
   implicit val xccSourceR   = quasar.effect.Read.monadReader_[ContentSource, XccEvalEff]
@@ -124,7 +126,7 @@ package object fs {
 
   // TODO: Refactor effect interpreters in terms of abstractions like `Catchable` and `Capture`, etc
   //       so this doesn't have to depend on `Task`.
-  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  @SuppressWarnings(Array("org.wartremover.warts.Null", "org.wartremover.warts.StringPlusAny", "org.wartremover.warts.Throw"))
   def runMarkLogicFs(xccUri: URI): DefErrT[Task, (Free[MarkLogicFs, ?] ~> Task, Task[Unit])] = {
     type CRT[X[_], A] = ReaderT[X, ContentSource, A]
     type  CR[      A] = CRT[Task, A]
@@ -144,14 +146,15 @@ package object fs {
       GenUUID.type4[Task]
     ).tupled.map { case (whandles, rhandles, qhandles, seq, genUUID) =>
       contentSource flatMapF { cs =>
-        val mlToSR = (liftMT[Task, SRT] compose genUUID)  :+:
-                     (liftMT[Task, SRT] compose rhandles) :+:
-                     (liftMT[Task, SRT] compose qhandles) :+:
-                     (liftMT[Task, SRT] compose whandles) :+:
-                      liftMT[Task, SRT]                   :+:
-                     (liftMT[Task, SRT] compose seq)      :+:
-                     Read.toReader[SR, Session]           :+:
-                     Read.constant[SR, ContentSource](cs)
+        val mlToSR = CopK.NaturalTransformation.of[MarkLogicFs, SR](
+                       (liftMT[Task, SRT] compose genUUID),
+                       (liftMT[Task, SRT] compose rhandles),
+                       (liftMT[Task, SRT] compose qhandles),
+                       (liftMT[Task, SRT] compose whandles),
+                        liftMT[Task, SRT],
+                       (liftMT[Task, SRT] compose seq),
+                       Read.toReader[SR, Session],
+                       Read.constant[SR, ContentSource](cs))
         val runML  = provideSession[Task](cs) compose foldMapNT(mlToSR)
         val sdown  = Task.delay(cs.getConnectionProvider.shutdown(null))
 
@@ -184,7 +187,7 @@ package object fs {
 
   /** Lift XccEval into MLFSQ. */
   val xccEvalToMLFSQ: XccEval ~> MLFSQ =
-    Hoist[MarkLogicPlanErrT].hoist(Hoist[PrologT].hoist(mapSNT(Inject[XccEvalEff, MarkLogicFs])))
+    Hoist[MarkLogicPlanErrT].hoist(Hoist[PrologT].hoist(mapSNT(SubInject[XccEvalEff, MarkLogicFs].inject)))
 
   implicit val dataAsXmlContent: AsContent[DocType.Xml, Data] =
     new AsContent[DocType.Xml, Data] {

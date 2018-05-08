@@ -20,6 +20,7 @@ import slamdata.Predef._
 
 import simulacrum.typeclass
 import scalaz._, Scalaz._
+import quasar.fp.{:<<:, ACopK}
 
 /** Represents the ability to request the next element of a monotonically
   * increasing numeric sequence.
@@ -49,6 +50,7 @@ sealed abstract class MonoSeqInstances extends MonoSeqInstances0 {
 
   implicit def freeMonoSeq[F[_], S[_]](implicit F: MonoSeq[F], I: F :<: S): MonoSeq[Free[S, ?]] =
     new MonoSeq[Free[S, ?]] { def next = Free.liftF(I(F.next)) }
+
 }
 
 sealed abstract class MonoSeqInstances0 {
@@ -63,4 +65,8 @@ sealed abstract class MonoSeqInstances0 {
 
   implicit def writerTMonoSeq[F[_]: Monad: MonoSeq, W: Monoid]: MonoSeq[WriterT[F, W, ?]] =
     MonoSeq.forTrans[F, WriterT[?[_], W, ?]]
+
+  implicit def freeMonoSeqCopK[F[_], S[a] <: ACopK[a]](implicit F: MonoSeq[F], I: F :<<: S): MonoSeq[Free[S, ?]] =
+    new MonoSeq[Free[S, ?]] { def next = Free.liftF(I(F.next)) }
+
 }

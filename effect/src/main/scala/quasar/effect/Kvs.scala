@@ -20,6 +20,8 @@ import slamdata.Predef._
 
 import scalaz._, Scalaz._
 
+import quasar.fp.{:<<:, ACopK}
+
 /** Provides the ability to read, write and delete from a store of values
   * indexed by keys.
   *
@@ -57,7 +59,7 @@ sealed abstract class KvsInstances extends KvsInstances0 {
       def delete(k: K)                            = KeyValueStore.Delete(k)
     }
 
-  implicit def freeKvs[K, V, F[_], S[_]](implicit F: Kvs[F, K, V], I: F :<: S): Kvs[Free[S, ?], K, V] =
+  implicit def freeKvsCopK[K, V, F[_], S[_]](implicit F: Kvs[F, K, V], I: F :<: S): Kvs[Free[S, ?], K, V] =
     new Kvs[Free[S, ?], K, V] {
       def keys                                    = Free.liftF(I(F.keys))
       def get(k: K)                               = Free.liftF(I(F.get(k)))
@@ -79,4 +81,13 @@ sealed abstract class KvsInstances0 {
 
   implicit def writerTKvs[K, V, W: Monoid, F[_]: Monad: Kvs[?[_], K, V]]: Kvs[WriterT[F, W, ?], K, V] =
     Kvs.forTrans[F, K, V, WriterT[?[_], W, ?]]
+
+  implicit def freeKvs[K, V, F[_], S[a] <: ACopK[a]](implicit F: Kvs[F, K, V], I: F :<<: S): Kvs[Free[S, ?], K, V] =
+    new Kvs[Free[S, ?], K, V] {
+      def keys                                    = Free.liftF(I(F.keys))
+      def get(k: K)                               = Free.liftF(I(F.get(k)))
+      def put(k: K, v: V)                         = Free.liftF(I(F.put(k, v)))
+      def compareAndPut(k: K, e: Option[V], u: V) = Free.liftF(I(F.compareAndPut(k, e, u)))
+      def delete(k: K)                            = Free.liftF(I(F.delete(k)))
+    }
 }
