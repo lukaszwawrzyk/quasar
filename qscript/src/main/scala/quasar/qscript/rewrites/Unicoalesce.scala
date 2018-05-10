@@ -27,7 +27,7 @@ import scalaz._
 import iotaz.{CopK, TListK}
 
 sealed trait Unicoalesce[T[_[_]], L <: TListK] {
-  def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]): CopK[L, T[CopK[L, ?]]] => Option[CopK[L, T[CopK[L, ?]]]]
+  def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]): CopK[L, T[CopK[L, ?]]] => Option[CopK[L, T[CopK[L, ?]]]]
 }
 
 object Unicoalesce {
@@ -38,7 +38,7 @@ object Unicoalesce {
    * along as a value (e.g. in BackendModule).
    */
   trait Capture[T[_[_]], L <: TListK] {
-    val C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]]
+    val C: Coalesce.Aux[T, CopK[L, ?]]
     val F: Functor[CopK[L, ?]]
     val QC: UnicoalesceQC[T, L]
     val SR: UnicoalesceSR[T, L]
@@ -54,7 +54,7 @@ object Unicoalesce {
 
     implicit def materialize[T[_[_]], L <: TListK](
       implicit
-        _C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]],
+        _C: Coalesce.Aux[T, CopK[L, ?]],
         _F: Functor[CopK[L, ?]],
         _QC: UnicoalesceQC[T, L],
         _SR: UnicoalesceSR[T, L],
@@ -76,7 +76,7 @@ object Unicoalesce {
 
   def apply[T[_[_]], L <: TListK](
     implicit
-      C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]],
+      C: Coalesce.Aux[T, CopK[L, ?]],
       F: Functor[CopK[L, ?]],
       QC: UnicoalesceQC[T, L],
       SR: UnicoalesceSR[T, L],
@@ -96,7 +96,7 @@ sealed trait UnicoalesceQC[T[_[_]], L <: TListK] extends Unicoalesce[T, L]
 
 private[qscript] trait UnicoalesceQCLowPriorityImplicits {
   implicit def default[T[_[_]], L <: TListK]: UnicoalesceQC[T, L] = new UnicoalesceQC[T, L] {
-    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
+    def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
   }
 }
 
@@ -106,7 +106,7 @@ object UnicoalesceQC extends UnicoalesceQCLowPriorityImplicits {
     implicit
       QC: QScriptCore[T, ?] :<<: CopK[L, ?]): UnicoalesceQC[T, L] = new UnicoalesceQC[T, L] {
 
-    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
+    def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
       C.coalesceQC[CopK[L, ?]](idPrism)
   }
 }
@@ -115,7 +115,7 @@ sealed trait UnicoalesceSR[T[_[_]], L <: TListK] extends Unicoalesce[T, L]
 
 private[qscript] trait UnicoalesceSRLowPriorityImplicits {
   implicit def default[T[_[_]], L <: TListK]: UnicoalesceSR[T, L] = new UnicoalesceSR[T, L] {
-    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
+    def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
   }
 }
 
@@ -127,7 +127,7 @@ object UnicoalesceSR extends UnicoalesceSRLowPriorityImplicits {
       QC: QScriptCore[T, ?] :<<: CopK[L, ?],
       SR: Const[ShiftedRead[A], ?] :<<: CopK[L, ?]): UnicoalesceSR[T, L] = new UnicoalesceSR[T, L] {
 
-    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
+    def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
       C.coalesceSR[CopK[L, ?], A](idPrism)
   }
 }
@@ -136,7 +136,7 @@ sealed trait UnicoalesceEJ[T[_[_]], L <: TListK] extends Unicoalesce[T, L]
 
 private[qscript] trait UnicoalesceEJLowPriorityImplicits {
   implicit def default[T[_[_]], L <: TListK]: UnicoalesceEJ[T, L] = new UnicoalesceEJ[T, L] {
-    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
+    def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
   }
 }
 
@@ -146,7 +146,7 @@ object UnicoalesceEJ extends UnicoalesceEJLowPriorityImplicits {
     implicit
       QC: EquiJoin[T, ?] :<<: CopK[L, ?]): UnicoalesceEJ[T, L] = new UnicoalesceEJ[T, L] {
 
-    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
+    def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
       C.coalesceEJ[CopK[L, ?]](idPrism.get)
   }
 }
@@ -155,7 +155,7 @@ sealed trait UnicoalesceTJ[T[_[_]], L <: TListK] extends Unicoalesce[T, L]
 
 private[qscript] trait UnicoalesceTJLowPriorityImplicits {
   implicit def default[T[_[_]], L <: TListK]: UnicoalesceTJ[T, L] = new UnicoalesceTJ[T, L] {
-    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
+    def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) = κ(None)
   }
 }
 
@@ -165,7 +165,7 @@ object UnicoalesceTJ extends UnicoalesceTJLowPriorityImplicits {
     implicit
       QC: ThetaJoin[T, ?] :<<: CopK[L, ?]): UnicoalesceTJ[T, L] = new UnicoalesceTJ[T, L] {
 
-    def apply(C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
+    def apply(C: Coalesce.Aux[T, CopK[L, ?]])(implicit F: Functor[CopK[L, ?]]) =
       C.coalesceTJ[CopK[L, ?]](idPrism.get)
   }
 }

@@ -55,8 +55,8 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
 
   def includeToExcludeExpr(expr: Fix[QST]): Fix[QST] =
     expr.transCata[Fix[QST]](
-      (qst => repeatedly[QST[Fix[QST]]](Coalesce[Fix, QST, QST].coalesceSR[QST, ADir](idPrism))(qst)) >>>
-      (qst => repeatedly[QST[Fix[QST]]](Coalesce[Fix, QST, QST].coalesceSR[QST, AFile](idPrism))(qst)))
+      (qst => repeatedly[QST[Fix[QST]]](Coalesce[Fix, QST].coalesceSR[QST, ADir](idPrism))(qst)) >>>
+      (qst => repeatedly[QST[Fix[QST]]](Coalesce[Fix, QST].coalesceSR[QST, AFile](idPrism))(qst)))
 
   type QSI[A] = CopK[QScriptCore ::: ProjectBucket ::: ThetaJoin ::: Const[DeadEnd, ?] ::: TNilK, A]
 
@@ -99,7 +99,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
     // TODO instance for Coalesce is not found. It was provided by
     // def qscriptCore[G[_]](implicit QC: QScriptCore :<<: G): Coalesce.Aux[T, QScriptCore, G]
     // but there is no reflexive instance for CopK.Inject
-/*
+
     "coalesce a Map into a subsequent LeftShift" in {
       import qscdsl._
       val exp: QScriptCore[Fix[QScriptCore]] =
@@ -113,7 +113,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
           OnUndefined.Omit,
           func.RightSide).unFix
 
-      Coalesce[Fix, QScriptCore, QScriptCore].coalesceQC(idPrism).apply(exp) must
+      Coalesce[Fix, QScriptCore].coalesceQC(idPrism).apply(exp) must
       equal(
         fix.LeftShift(
           fix.Unreferenced,
@@ -123,7 +123,6 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
           OnUndefined.Omit,
           func.RightSide).unFix.some)
     }
-*/
 
     "coalesce a Filter into a preceding ThetaJoin" in {
       import qstdsl._
@@ -156,7 +155,7 @@ class RewriteSpec extends quasar.Qspec with CompilerHelpers with QScriptHelpers 
               recFunc.ProjectKeyS(recFunc.Hole, "l"),
               "lon"))).unFix
 
-      Coalesce[Fix, QST, QST].coalesceTJ(idPrism[QST].get).apply(exp).map(rewrite.normalizeTJ[QST]) must
+      Coalesce[Fix, QST].coalesceTJ(idPrism[QST].get).apply(exp).map(rewrite.normalizeTJ[QST]) must
       equal(
         fix.ThetaJoin(
           fix.Unreferenced,

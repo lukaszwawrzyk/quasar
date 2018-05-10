@@ -40,7 +40,7 @@ private[qscript] trait UnirewriteLowPriorityImplicits {
 //      FC: Functor[CopK[L, ?]],
       TC0: Traverse[C0[L, ?]],
       J: SimplifyJoin.Aux[T, QScriptShiftRead[T, ?], C0[L, ?]],
-      C: Coalesce.Aux[T, QScriptShiftRead[T, ?], QScriptShiftRead[T, ?]],
+      C: Coalesce.Aux[T, QScriptShiftRead[T, ?]],
       N: Normalizable[QScriptShiftRead[T, ?]],
       E: ExpandDirs.Aux[T, C0[L, ?], CopK[L, ?]]): Unirewrite[T, L] = new Unirewrite[T, L] {
 
@@ -63,7 +63,7 @@ object Unirewrite extends UnirewriteLowPriorityImplicits {
       TJ: ThetaJoin[T, ?] :<<: CopK[L, ?],
       GI: Injectable.Aux[CopK[L, ?], QScriptTotal[T, ?]],
       S: ShiftReadDir.Aux[T, QScriptRead[T, ?], CopK[L, ?]],
-      C: Coalesce.Aux[T, CopK[L, ?], CopK[L, ?]],
+      C: Coalesce.Aux[T, CopK[L, ?]],
       N: Normalizable[CopK[L, ?]]): Unirewrite[T, L] = new Unirewrite[T, L] {
 
     def apply[F[_]: Monad: MonadFsErr](r: Rewrite[T], lc: DiscoverPath.ListContents[F]): T[QScriptRead[T, ?]] => F[T[CopK[L, ?]]] =

@@ -78,7 +78,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
               SF: Const[ShiftedRead[AFile], ?] :<<: G,
               GI: Injectable.Aux[G, QScriptTotal],
               S: ShiftRead.Aux[T, F, G],
-              C: Coalesce.Aux[T, G, G],
+              C: Coalesce.Aux[T, G],
               N: Normalizable[G])
       : T[F] => T[G] = {
     _.codyna[G, T[G]](
@@ -96,7 +96,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     SD: Const[ShiftedRead[ADir], ?] :<<: G,
     GI: Injectable.Aux[G, QScriptTotal],
     S: ShiftReadDir.Aux[T, F, G],
-    C: Coalesce.Aux[T, G, G],
+    C: Coalesce.Aux[T, G],
     N: Normalizable[G]
   ): T[F] => T[G] =
     _.codyna[G, T[G]](
@@ -113,7 +113,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
               GI: Injectable.Aux[G, QScriptTotal],
               S: ShiftRead.Aux[T, F, G],
               J: SimplifyJoin.Aux[T, G, H],
-              C: Coalesce.Aux[T, G, G],
+              C: Coalesce.Aux[T, G],
               N: Normalizable[G])
       : T[F] => T[H] =
     shiftRead[F, G].apply(_).transCata[T[H]](J.simplifyJoin[J.G](idPrism.reverseGet))
@@ -490,7 +490,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
   private def applyNormalizations[F[a] <: ACopK[a]: Functor: Normalizable, G[_]: Functor](
     prism: PrismNT[G, F],
     normalizeJoins: F[T[G]] => Option[G[T[G]]])(
-    implicit C: Coalesce.Aux[T, F, F],
+    implicit C: Coalesce.Aux[T, F],
              QC: QScriptCore :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
       F[T[G]] => G[T[G]] = {
@@ -513,7 +513,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     bij: Bijection[A, T[G]])(
     prism: PrismNT[G, F],
     normalizeJoins: F[T[G]] => Option[G[T[G]]])(
-    implicit C:  Coalesce.Aux[T, F, F],
+    implicit C:  Coalesce.Aux[T, F],
              QC: QScriptCore :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
       F[A] => G[A] =
@@ -523,7 +523,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
   private def normalizeEJBijection[F[a] <: ACopK[a]: Functor: Normalizable, G[_]: Functor, A](
     bij: Bijection[A, T[G]])(
     prism: PrismNT[G, F])(
-    implicit C:  Coalesce.Aux[T, F, F],
+    implicit C:  Coalesce.Aux[T, F],
              QC: QScriptCore :<<: F,
              EJ: EquiJoin :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
@@ -536,7 +536,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
   }
 
   def normalizeEJ[F[a] <: ACopK[a]: Functor: Normalizable](
-    implicit C:  Coalesce.Aux[T, F, F],
+    implicit C:  Coalesce.Aux[T, F],
              QC: QScriptCore :<<: F,
              EJ: EquiJoin :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
@@ -544,7 +544,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     normalizeEJBijection[F, F, T[F]](bijectionId)(idPrism)
 
   def normalizeEJCoEnv[F[a] <: ACopK[a]: Functor: Normalizable](
-    implicit C:  Coalesce.Aux[T, F, F],
+    implicit C:  Coalesce.Aux[T, F],
              QC: QScriptCore :<<: F,
              EJ: EquiJoin :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
@@ -555,7 +555,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     bij: Bijection[A, T[G]])(
     prism: PrismNT[G, F],
     rebase: FreeQS => T[G] => Option[T[G]])(
-    implicit C:  Coalesce.Aux[T, F, F],
+    implicit C:  Coalesce.Aux[T, F],
              QC: QScriptCore :<<: F,
              TJ: ThetaJoin :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
@@ -570,7 +570,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
   }
 
   def normalizeTJ[F[a] <: ACopK[a]: Traverse: Normalizable](
-    implicit C:  Coalesce.Aux[T, F, F],
+    implicit C:  Coalesce.Aux[T, F],
              QC: QScriptCore :<<: F,
              TJ: ThetaJoin :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
@@ -578,7 +578,7 @@ class Rewrite[T[_[_]]: BirecursiveT: EqualT: ShowT: RenderTreeT] extends TTypes[
     normalizeTJBijection[F, F, T[F]](bijectionId)(idPrism, rebaseT)
 
   def normalizeTJCoEnv[F[a] <: ACopK[a]: Traverse: Normalizable](
-    implicit C:  Coalesce.Aux[T, F, F],
+    implicit C:  Coalesce.Aux[T, F],
              QC: QScriptCore :<<: F,
              TJ: ThetaJoin :<<: F,
              FI: Injectable.Aux[F, QScriptTotal]):
