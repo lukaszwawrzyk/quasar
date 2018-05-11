@@ -16,9 +16,11 @@
 
 package quasar.fp
 
-import matryoshka.∘
+import matryoshka.{Delay, ∘}
 import org.scalacheck._
 import scalaz._
+import slamdata.Predef.{Array, SuppressWarnings}
+import iotaz.{CopK, TListK}
 
 object Helpers {
   // NB: Should be exposed via matryoshka-scalacheck, which doesn’t yet exist.
@@ -28,4 +30,8 @@ object Helpers {
     implicit F: Arbitrary ~> (Arbitrary ∘ F)#λ, A: Arbitrary[A]):
       Arbitrary[F[A]] =
     F(A)
+
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkDelayArbitrary[X <: TListK]: Delay[Arbitrary, CopK[X, ?]] = null
+
 }
