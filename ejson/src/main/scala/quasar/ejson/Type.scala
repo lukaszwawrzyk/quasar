@@ -17,6 +17,7 @@
 package quasar.ejson
 
 import slamdata.Predef._
+import quasar.fp.copkTraverse
 
 import matryoshka._
 import scalaz.std.option._

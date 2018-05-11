@@ -18,6 +18,7 @@ package quasar.ejson
 
 import slamdata.Predef._
 import quasar.contrib.matryoshka.{project => projectg, _}
+import quasar.fp.{copkTraverse, copkOrder}
 
 import matryoshka._
 import matryoshka.implicits._

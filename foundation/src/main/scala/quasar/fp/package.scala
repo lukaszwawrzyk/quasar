@@ -263,6 +263,8 @@ package object fp
   implicit def copkShow[X <: TListK]: Delay[Show, CopK[X, ?]] = null
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copKRenderTree[X <: TListK]: Delay[RenderTree, CopK[X, ?]] = null
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkOrder[X <: TListK]: Delay[Order, CopK[X, ?]] = null
 
   implicit def coproductShow[F[_], G[_]](implicit F: Delay[Show, F], G: Delay[Show, G]): Delay[Show, Coproduct[F, G, ?]] =
     Delay.fromNT(λ[Show ~> DelayedFG[F, G]#Show](sh =>
