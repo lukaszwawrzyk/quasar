@@ -19,7 +19,7 @@ package quasar.qsu
 import slamdata.Predef._
 import quasar.fs.Planner.{InternalError, PlannerErrorME}
 import quasar.ejson.implicits._
-import quasar.fp.{copkEqual, copkShow, copkTraverse, coproductEqual, coproductShow, symbolOrder, symbolShow}
+import quasar.fp.{copkShow, copkTraverse, symbolOrder, symbolShow}
 import quasar.qscript.FreeMap
 
 import matryoshka._
@@ -107,6 +107,7 @@ sealed abstract class QAuthInstances {
 
   implicit def equal[T[_[_]]: BirecursiveT: EqualT]: Equal[QAuth[T]] = {
     implicit val eqP: Equal[QProv.P[T]] = QProv[T].prov.provenanceEqual
+    import quasar.fp.copkEqual
     Equal.equalBy(qa => (qa.dims, qa.groupKeys))
   }
 

@@ -20,6 +20,7 @@ import slamdata.Predef._
 import quasar.{ejson => ejs}
 import quasar.ejson.{Decoded, DecodeEJsonK, EJson, EncodeEJsonK, ExtEJson => E, TypeTag}
 import quasar.ejson.implicits._
+import quasar.fp.copkTraverse
 
 import matryoshka._
 import scalaz._, Scalaz._

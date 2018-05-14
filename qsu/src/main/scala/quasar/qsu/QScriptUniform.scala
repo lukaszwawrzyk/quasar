@@ -24,7 +24,7 @@ import quasar.ejson.{EJson, Fixed}
 import quasar.ejson.implicits._
 import quasar.contrib.matryoshka._
 import quasar.fp.ski.{ι, κ}
-import quasar.fp._
+import quasar.fp.{copkEqual => _, _}
 import quasar.qscript._
 import quasar.qscript.RecFreeS._
 import quasar.qscript.provenance.JoinKeys

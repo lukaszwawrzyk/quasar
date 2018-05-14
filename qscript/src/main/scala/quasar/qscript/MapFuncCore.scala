@@ -23,7 +23,7 @@ import quasar.RenderTree.ops._
 import quasar.contrib.matryoshka._
 import quasar.ejson._
 import quasar.ejson.implicits._
-import quasar.fp._
+import quasar.fp.{copkEqual => _, _}, properCopkEqual._
 import quasar.fp.ski._
 import quasar.qscript.rewrites.{DedupeGuards, ExtractFiltering}
 import quasar.time.TemporalPart
@@ -34,6 +34,7 @@ import matryoshka.implicits._
 import matryoshka.patterns._
 import monocle.macros.Lenses
 import scalaz._, Scalaz._
+import iotaz.CopK
 
 sealed abstract class MapFuncCore[T[_[_]], A]
 
@@ -56,8 +57,8 @@ sealed abstract class Ternary[T[_[_]], A] extends MapFuncCore[T, A] {
 object MapFuncCore {
   import MapFuncsCore._
 
-  val EC = Inject[Common,    EJson]
-  val EX = Inject[Extension, EJson]
+  val EC = CopK.Inject[Common,    EJson]
+  val EX = CopK.Inject[Extension, EJson]
 
   type CoMapFuncR[T[_[_]], A] = CoEnv[A, MapFunc[T, ?], FreeMapA[T, A]]
   type StaticAssoc[T[_[_]], A] = (T[EJson], FreeMapA[T, A])

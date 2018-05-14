@@ -22,8 +22,9 @@ import quasar.contrib.matryoshka._
 import quasar.contrib.matryoshka.arbitrary._
 import quasar.contrib.pathy._
 import quasar.fp._
+import quasar.fp.Helpers._
 import quasar.fp.ski.κ
-import quasar.ejson.{EJson, EJsonArbitrary}
+import quasar.ejson.{EJson/*, EJsonArbitrary*/}
 import quasar.ejson.implicits._
 import quasar.qscript._
 import quasar.qscript.RecFreeS._
@@ -39,7 +40,7 @@ import scalaz._
 import Scalaz._
 
 final class PreferProjectionSpec extends quasar.Qspec with QScriptHelpers {
-  import EJsonArbitrary._
+//  import EJsonArbitrary._ will be needed when we have proper arbitrary copk
   import PreferProjection.{projectComplement, preferProjection}
 
   implicit val params = Parameters(maxSize = 10)

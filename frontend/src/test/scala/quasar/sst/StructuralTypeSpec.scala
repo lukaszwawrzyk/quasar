@@ -22,7 +22,7 @@ import quasar.contrib.matryoshka.arbitrary._
 import quasar.{ejson => ejs}
 import quasar.ejson.{Decoded, DecodeEJson, EJson, EJsonArbitrary, EncodeEJson}
 import quasar.ejson.implicits._
-import quasar.fp._
+import quasar.fp.{copkEqual => _, _}, Helpers._
 import quasar.tpe._
 
 import scala.Predef.$conforms

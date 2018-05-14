@@ -207,12 +207,12 @@ object BsonCodec {
   }
 
   def fromEJson(v: BsonVersion): AlgebraM[PlannerError \/ ?, EJson, Bson] =
-    _.run.fold(fromExtension, fromCommon(v)(_).right)
+    _.toDisjunction.fold(fromExtension, fromCommon(v)(_).right)
 
   /** Converts the parts of `Bson` that it can, then stores the rest in,
     * effectively, `Free.Pure`.
     */
-  def toEJson[F[_]](implicit C: ejson.Common :<: F, E: ejson.Extension :<: F):
+  def toEJson[F[a] <: ACopK[a]](implicit C: ejson.Common :<<: F, E: ejson.Extension :<<: F):
       ElgotCoalgebra[Bson \/ ?, F, Bson] = {
     case Bson.Arr(value)       => C.inj(ejson.Arr(value)).right
     case Bson.Doc(value)       =>

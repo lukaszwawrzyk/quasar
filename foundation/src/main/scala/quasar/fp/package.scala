@@ -255,6 +255,26 @@ package object fp
 
   }
 
+  // TODO remove. This is here as copkEqual is too generic. It can create instance for any CopK, even if there are no Equal instances for
+  // all the members. This can create conflicts in implicits in places they weren't before. In this case we shouldn't import copKEqual,
+  // and import contents of this object instead. Once there is a proper instance for of Equal for CopK this should be removed, along with all
+  // copKEqual => _ unimports.
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  object properCopkEqual {
+    implicit def copkEqual1[E1[_]](implicit
+      E1: Delay[Equal, E1]
+    ): Delay[Equal, CopK[E1 ::: TNilK, ?]] = null
+    implicit def copkEqual2[E1[_], E2[_]](implicit
+      E1: Delay[Equal, E1],
+      E2: Delay[Equal, E2]
+    ): Delay[Equal, CopK[E1 ::: E2 ::: TNilK, ?]] = null
+    implicit def copkEqual3[E1[_], E2[_], E3[_]](implicit
+      E1: Delay[Equal, E1],
+      E2: Delay[Equal, E2],
+      E3: Delay[Equal, E3]
+    ): Delay[Equal, CopK[E1 ::: E2 ::: E3 ::: TNilK, ?]] = null
+  }
+
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copkEqual[X <: TListK]: Delay[Equal, CopK[X, ?]] = null
   @SuppressWarnings(Array("org.wartremover.warts.Null"))

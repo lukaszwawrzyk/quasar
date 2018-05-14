@@ -23,6 +23,7 @@ import quasar.contrib.pathy._
 import quasar.ejson.{EJson, EncodeEJson}
 import quasar.ejson.implicits._
 import quasar.fp.numeric.{Natural, Positive}
+import quasar.fp.copkTraverse
 import quasar.fs._
 import quasar.fs.mount.Mounting
 import quasar.frontend.SemanticErrors

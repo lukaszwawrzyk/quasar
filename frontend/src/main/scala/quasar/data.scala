@@ -508,12 +508,12 @@ object Data {
 
   // TODO: Data should be replaced with EJson. These just exist to bridge the
   //       gap in the meantime.
-  val fromEJson: Algebra[EJson, Data] = _.run.fold(fromExtension, fromCommon)
+  val fromEJson: Algebra[EJson, Data] = _.toDisjunction.fold(fromExtension, fromCommon)
 
   /** Converts the parts of `Data` that it can, then stores the rest in,
     * effectively, `Free.Pure`.
     */
-  def toEJson[F[_]](implicit C: Common :<: F, E: Extension :<: F):
+  def toEJson[F[a] <: ACopK[a]](implicit C: Common :<<: F, E: Extension :<<: F):
       Coalgebra[CoEnv[Data, F, ?], Data] =
     ed => CoEnv(ed match {
       case Arr(value)       => C.inj(ejson.Arr(value)).right

@@ -83,7 +83,7 @@ object RenderQScriptDSL {
     def apply[A](fa: RenderQScriptDSL[A]): RenderQScriptDSL[EJson[A]] = {
       (base: String, a: EJson[A]) =>
         val base = "json"
-        val (label, children) = a.run.fold({
+        val (label, children) = a.toDisjunction.fold({
           case ejson.Meta(value, meta) => ("meta", fa(base, value).right :: fa(base, meta).right :: Nil)
           case ejson.Map(value)        => ("map",
             DSLTree("", "List", (value.map(t => DSLTree("", "", t.umap(fa(base, _).right).toIndexedSeq.toList.some).right).some)).right :: Nil)

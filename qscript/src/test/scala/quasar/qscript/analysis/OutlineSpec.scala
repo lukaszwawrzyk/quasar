@@ -20,10 +20,10 @@ import slamdata.Predef.{Map => _, _}
 import quasar.common.{JoinType, JoinTypeArbitrary, SortDir}
 import quasar.contrib.matryoshka._
 import quasar.contrib.matryoshka.arbitrary._
-import quasar.fp._
+import quasar.fp.{copkEqual => _, _}, Helpers._
 import quasar.fp.ski.κ
 import quasar.ejson
-import quasar.ejson.{CommonEJson, EJson, EJsonArbitrary, ExtEJson}
+import quasar.ejson.{CommonEJson, EJson, ExtEJson}
 import quasar.ejson.implicits._
 import quasar.qscript.RecFreeS._
 import quasar.qscript._
@@ -36,7 +36,7 @@ import org.specs2.scalacheck._
 import scalaz._, Scalaz._
 
 final class OutlineSpec extends quasar.Qspec with QScriptHelpers {
-  import EJsonArbitrary._, FigureArbitrary._, JoinTypeArbitrary._
+  import /*EJsonArbitrary._, will be needed with proper arbitrary impl for copk */FigureArbitrary._, JoinTypeArbitrary._
   import MapFuncCore.StaticMap
   import Outline.{Figure, Shape, freeEJsonEqual, undefinedF, unknownF, arrF, mapF}
 

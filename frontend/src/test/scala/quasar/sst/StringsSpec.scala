@@ -21,7 +21,7 @@ import quasar.contrib.algebra._
 import quasar.contrib.matryoshka.envT
 import quasar.ejson.EJson
 import quasar.ejson.implicits._
-import quasar.fp._
+import quasar.fp.{copkEqual => _, _}
 import quasar.tpe.{SimpleType, TypeF}
 import StructuralType.{TagST, TypeST}
 

@@ -27,7 +27,8 @@ package object ejson {
   val ObjJson     = CopK.Inject[Obj, Json]
   val CommonJson  = CopK.Inject[Common, Json]
 
-  type EJson[A]   = CopK[Extension ::: Common ::: TNilK, A]
+  type EJsonL     = Extension ::: Common ::: TNilK
+  type EJson[A]   = CopK[EJsonL, A]
   val ExtEJson    = CopK.Inject[Extension, EJson]
   val CommonEJson = CopK.Inject[Common, EJson]
 }

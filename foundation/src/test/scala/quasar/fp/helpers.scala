@@ -31,6 +31,7 @@ object Helpers {
       Arbitrary[F[A]] =
     F(A)
 
+  // TODO provide actual instance
   @SuppressWarnings(Array("org.wartremover.warts.Null"))
   implicit def copkDelayArbitrary[X <: TListK]: Delay[Arbitrary, CopK[X, ?]] = null
 

@@ -22,7 +22,7 @@ import quasar.{Qspec, TreeMatchers}
 import quasar.fs.Planner.PlannerError
 import quasar.ejson.{EJson, Fixed}
 import quasar.ejson.implicits._
-import quasar.fp.{coproductShow, copkEqual, copkTraverse, copKRenderTree}
+import quasar.fp.{copkShow, copkEqual, copkTraverse, copKRenderTree}
 import quasar.qscript.{construction, ExcludeId, Hole, MapFuncsCore, ReduceFuncs, SrcHole}
 
 import matryoshka.{delayEqual, delayShow, showTShow, Embed}

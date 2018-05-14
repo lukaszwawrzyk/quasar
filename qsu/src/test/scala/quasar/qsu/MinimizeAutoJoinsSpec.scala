@@ -20,7 +20,7 @@ import slamdata.Predef._
 import quasar.{Qspec, TreeMatchers, Type}
 import quasar.ejson.{EJson, Fixed}
 import quasar.ejson.implicits._
-import quasar.fp._
+import quasar.fp.{copkEqual => _, _}, properCopkEqual._
 import quasar.fs.Planner, Planner.PlannerError
 import quasar.qscript.{
   construction,

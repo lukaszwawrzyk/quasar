@@ -187,7 +187,7 @@ abstract class QueryRegressionTest[S[_]](
     λ[EndoK[ejson.Common]](CO.dec.modify(_.round(TestContext))(_))
 
   val normalizeJson: Json => Json =
-    j => Recursive[Json, ejson.Json].transCata(j)(liftFF(reducePrecision[Json]))
+    j => Recursive[Json, ejson.Json].transCata(j)(liftFFCopK(reducePrecision[Json]))
 
   /** Verify the given results according to the provided expectation. */
   def verifyResults(

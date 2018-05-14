@@ -20,7 +20,7 @@ import slamdata.Predef.{Eq => _, Int => SInt, _}
 import quasar.contrib.scalaz.MonadState_
 import quasar.ejson._
 import quasar.ejson.implicits._
-import quasar.fp._
+import quasar.fp.{copkEqual => _, _}
 import quasar.qscript.provenance._
 
 import matryoshka.{Hole => _, _}

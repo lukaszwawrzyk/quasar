@@ -19,7 +19,7 @@ package quasar.physical.marklogic
 import slamdata.Predef._
 import quasar.contrib.scalaz.MonadError_
 import quasar.ejson.{EJson, Str}
-import quasar.fp.{coproductShow, copkTraverse}
+import quasar.fp.{copkTraverse, copkShow}
 import quasar.fp.ski.κ
 import quasar.contrib.matryoshka.totally
 import quasar.contrib.pathy.{AFile, UriPathCodec}

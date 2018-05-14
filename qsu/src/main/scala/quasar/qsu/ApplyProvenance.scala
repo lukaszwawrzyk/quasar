@@ -23,7 +23,7 @@ import quasar.contrib.scalaz.MonadState_
 import quasar.ejson
 import quasar.ejson.EJson
 import quasar.ejson.implicits._
-import quasar.fp._
+import quasar.fp.{copkEqual => _, _}
 import quasar.fp.ski.ι
 import quasar.qscript.{construction, ExcludeId, IdOnly, IdStatus, OnUndefined}
 

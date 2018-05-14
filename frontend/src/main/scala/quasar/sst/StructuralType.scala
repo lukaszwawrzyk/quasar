@@ -32,7 +32,7 @@ import quasar.ejson.{
   TypeTag
 }
 import quasar.ejson.implicits._
-import quasar.fp.{coproductEqual, coproductShow}
+import quasar.fp.{coproductEqual, coproductShow, copkTraverse}
 import quasar.fp.ski.κ
 import quasar.tpe._
 
