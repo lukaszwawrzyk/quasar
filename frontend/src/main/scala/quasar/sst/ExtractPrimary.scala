@@ -34,6 +34,10 @@ trait ExtractPrimary[F[_]] {
 object ExtractPrimary {
   import ops._
 
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkExtractPrimary[X <: iotaz.TListK]: ExtractPrimary[iotaz.CopK[X, ?]] = null
+
   implicit def coproductExtractPrimary[F[_]: ExtractPrimary, G[_]: ExtractPrimary]
     : ExtractPrimary[Coproduct[F, G, ?]] =
     new ExtractPrimary[Coproduct[F, G, ?]] {

@@ -20,6 +20,7 @@ import slamdata.Predef._
 import quasar.contrib.matryoshka.envT
 import quasar.ejson.{EJson, TypeTag}
 import quasar.tpe.{SimpleType, TypeF}
+import quasar.fp.copkTraverse
 
 import matryoshka.{Corecursive, Recursive}
 import scalaz.{IList, Order}

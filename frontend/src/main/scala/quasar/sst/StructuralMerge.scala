@@ -44,6 +44,10 @@ object StructuralMerge {
       mergePF[V, T].lift(pp)
   }
 
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkStructuralMerge[X <: iotaz.TListK]: StructuralMerge[iotaz.CopK[X, ?]] = null
+
   implicit def coproductStructuralMerge[F[_]: Functor, G[_]: Functor](
     implicit
     F: StructuralMerge[F],

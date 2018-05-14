@@ -21,6 +21,7 @@ import quasar.contrib.spire.random.dist._
 import quasar.ejson.{DecodeEJson, EJson, Type => EType}
 import quasar.fp.numeric.SampleStats
 import quasar.fp.ski.ι
+import quasar.fp.{copkTraverse, TwoElemCopKOps}
 import quasar.sst.{strings, Population, PopulationSST, SST, StructuralType, Tagged, TypeStat}
 import quasar.tpe.TypeF
 
@@ -98,7 +99,7 @@ object dist {
       JC: Corecursive.Aux[J, EJson],
       JR: Recursive.Aux[J, EJson])
       : Algebra[STF[J, (A, TypeStat[A]), ?], Option[(A, Dist[J])]] =
-    _.run.traverse(_.run.swap) map {
+    _.run.traverse(_.toDisjunction.swap) map {
       case (_, TypeF.Bottom()) =>
         none
 
