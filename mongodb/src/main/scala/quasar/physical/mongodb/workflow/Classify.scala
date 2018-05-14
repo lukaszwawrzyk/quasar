@@ -31,6 +31,10 @@ import scalaz._
 }
 
 object Classify {
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkClassify[X <: iotaz.TListK]: Classify[iotaz.CopK[X, ?]] = null
+
   implicit def coproductClassify[F[_]: Functor, G[_]: Functor, A]
     (implicit CF: Classify[F], CG: Classify[G])
       : Classify[Coproduct[F, G, ?]] = new Classify[Coproduct[F, G, ?]] {

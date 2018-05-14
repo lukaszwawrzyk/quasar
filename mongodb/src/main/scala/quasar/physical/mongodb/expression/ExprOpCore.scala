@@ -260,7 +260,7 @@ object ExprOpCoreF {
       }
   }
 
-  implicit def ops[F[_]: Functor](implicit I: ExprOpCoreF :<: F): ExprOpOps.Aux[ExprOpCoreF, F] = new ExprOpOps[ExprOpCoreF] {
+  implicit def ops[F[a] <: ACopK[a]: Functor](implicit I: ExprOpCoreF :<<: F): ExprOpOps.Aux[ExprOpCoreF, F] = new ExprOpOps[ExprOpCoreF] {
     type OUT[A] = F[A]
 
     val fp = fixpoint[Fix[F], F](Fix(_))
@@ -377,9 +377,9 @@ object ExprOpCoreF {
   /** "Fixed" constructors, with the corecursive type and the coproduct type
     * captured when an instance is created.
     */
-  final case class fixpoint[T, EX[_]: Functor]
+  final case class fixpoint[T, EX[a] <: ACopK[a]: Functor]
     (embed: EX[T] => T)
-    (implicit I: ExprOpCoreF :<: EX) {
+    (implicit I: ExprOpCoreF :<<: EX) {
     @inline private def convert(expr: ExprOpCoreF[T]): T = embed(I.inj(expr))
 
     def $include(): T                    = convert($includeF[T]())

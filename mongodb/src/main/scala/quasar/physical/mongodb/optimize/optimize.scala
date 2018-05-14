@@ -34,8 +34,8 @@ package object optimize {
     import fixExprOp._
 
     @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-    private def deleteUnusedFields0[F[_]: Functor: Refs](op: Fix[F], usedRefs: Option[Set[DocVar]])
-      (implicit I: WorkflowOpCoreF :<: F): Fix[F] = {
+    private def deleteUnusedFields0[F[a] <: ACopK[a]: Functor: Refs](op: Fix[F], usedRefs: Option[Set[DocVar]])
+      (implicit I: WorkflowOpCoreF :<<: F): Fix[F] = {
       def getRefs[A](op: F[_], prev: Option[Set[DocVar]]):
           Option[Set[DocVar]] = op match {
         case I($GroupF(_, _, _))           => Some(Refs[F].refs(op).toSet)
@@ -80,14 +80,14 @@ package object optimize {
       Fix(pruned.map(deleteUnusedFields0(_, getRefs(pruned, usedRefs))))
     }
 
-    def deleteUnusedFields[F[_]: Functor: Refs](op: Fix[F])(implicit ev: WorkflowOpCoreF :<: F): Fix[F] =
+    def deleteUnusedFields[F[a] <: ACopK[a]: Functor: Refs](op: Fix[F])(implicit ev: WorkflowOpCoreF :<<: F): Fix[F] =
       deleteUnusedFields0(op, None)
 
     /** Converts a \$group with fields that duplicate keys into a \$group
       * without those fields followed by a \$project that projects those fields
       * from the key.
       */
-    private def simplifyGroupƒ[F[_]: Coalesce: Functor](implicit ev: WorkflowOpCoreF :<: F):
+    private def simplifyGroupƒ[F[a] <: ACopK[a]: Coalesce: Functor](implicit ev: WorkflowOpCoreF :<<: F):
         F[Fix[F]] => Option[F[Fix[F]]] = {
       case ev($GroupF(src, Grouped(cont), id)) =>
         val (newCont, proj) =
@@ -123,10 +123,10 @@ package object optimize {
       case _ => None
     }
 
-    def simplifyGroup[F[_]: Coalesce: Functor](op: Fix[F])(implicit ev: WorkflowOpCoreF :<: F): Fix[F] =
+    def simplifyGroup[F[a] <: ACopK[a]: Coalesce: Functor](op: Fix[F])(implicit ev: WorkflowOpCoreF :<<: F): Fix[F] =
       op.transCata[Fix[F]](orOriginal(simplifyGroupƒ[F]))
 
-    private def reorderOpsƒ[F[_]: Coalesce: Functor](implicit I: WorkflowOpCoreF :<: F)
+    private def reorderOpsƒ[F[a] <: ACopK[a]: Coalesce: Functor](implicit I: WorkflowOpCoreF :<<: F)
         : F[Fix[F]] => Option[F[Fix[F]]] = {
       def rewriteSelector(sel: Selector, defs: Map[DocVar, DocVar]): Option[Selector] =
         sel.mapUpFieldsM { f =>
@@ -191,8 +191,8 @@ package object optimize {
     }
 
     @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-    def reorderOps[F[_]: Functor: Coalesce](wf: Fix[F])
-      (implicit I: WorkflowOpCoreF :<: F)
+    def reorderOps[F[a] <: ACopK[a]: Functor: Coalesce](wf: Fix[F])
+      (implicit I: WorkflowOpCoreF :<<: F)
       : Fix[F] = {
       val reordered = wf.transCata[Fix[F]](orOriginal(reorderOpsƒ[F]))
       if (reordered == wf) wf else reorderOps(reordered)
@@ -286,8 +286,8 @@ package object optimize {
       } yield unwound1 -> Grouped(values1)
     }
 
-    def inlineGroupProjects[F[_]: Functor](g: $GroupF[Fix[F]])
-      (implicit I: WorkflowOpCoreF :<: F)
+    def inlineGroupProjects[F[a] <: ACopK[a]: Functor](g: $GroupF[Fix[F]])
+      (implicit I: WorkflowOpCoreF :<<: F)
       : Option[(Fix[F], Grouped[ExprOp], Reshape.Shape[ExprOp])] = {
       def collectShapes: GAlgebra[(Fix[F], ?), F, (List[Reshape[ExprOp]], Fix[F])] =
         {

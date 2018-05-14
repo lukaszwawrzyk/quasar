@@ -31,6 +31,8 @@ import matryoshka.data.Fix
 import matryoshka.implicits._
 import monocle.syntax.all._
 import scalaz._, Scalaz._
+import iotaz.{CopK, TNilK}
+import iotaz.TListK.:::
 
 /** A Workflow is a graph of atomic operations, with WorkflowOps for the
   * vertices. We crush them down into a WorkflowTask. This `crush` gives us a
@@ -49,7 +51,7 @@ package object workflow {
   /** The type for workflows targeting MongoDB 3.2 specifically. */
   type Workflow3_2F[A] = WorkflowOpCoreF[A]
   /** The type for workflows targeting MongoDB 3.4 specifically. */
-  type Workflow3_4F[A] = Coproduct[WorkflowOp3_4F, WorkflowOpCoreF, A]
+  type Workflow3_4F[A] = CopK[WorkflowOp3_4F ::: WorkflowOpCoreF ::: TNilK, A]
 
   /** The type for workflows supporting the most advanced capabilities. */
   type WorkflowF[A] = Workflow3_4F[A]
@@ -57,24 +59,24 @@ package object workflow {
 
   type FixOp[F[_]] = Fix[F] => Fix[F]
 
-  val WC = Inject[WorkflowOpCoreF, WorkflowF]
-  val W34 = Inject[WorkflowOp3_4F, WorkflowF]
+  val WC = CopK.Inject[WorkflowOpCoreF, WorkflowF]
+  val W34 = CopK.Inject[WorkflowOp3_4F, WorkflowF]
 
   /** A "newtype" for ops that appear in pipelines, for use mostly after a
     * workflow is constructed, with fixed type that can represent any workflow.
     */
   final case class PipelineOp(op: WorkflowF[Unit], bson: Bson.Doc) {
-    def rewrite[F[_]](f: F[Unit] => Option[PipelineF[F, Unit]])
-      (implicit I: F :<: WorkflowF): PipelineOp =
+    def rewrite[F[a] <: ACopK[a]](f: F[Unit] => Option[PipelineF[F, Unit]])
+      (implicit I: F :<<: WorkflowF): PipelineOp =
       I.prj(op).flatMap(f).cata(PipelineOp(_), this)
   }
   object PipelineOp {
-    def apply[F[_]](f: PipelineF[F, Unit])(implicit I: F :<: WorkflowF): PipelineOp =
+    def apply[F[a] <: ACopK[a]](f: PipelineF[F, Unit])(implicit I: F :<<: WorkflowF): PipelineOp =
       PipelineOp(I.inj(f.wf), f.bson)
   }
   object PipelineOpCore {
     def unapply(p: PipelineOp): Option[WorkflowOpCoreF[Unit]] =
-      Inject[WorkflowOpCoreF, WorkflowF].prj(p.op)
+      CopK.Inject[WorkflowOpCoreF, WorkflowF].prj(p.op)
   }
 
   /** Quasar result sigil. */
@@ -102,7 +104,7 @@ package object workflow {
   //     functions that require it are able to resolve it from other evidence.
   //     Since that seems likely to be a short-lived phenomenon, instead for now
   //     implicits are defined below for just the specific types being used.
-  def coalesceAll[F[_]: Functor](implicit I: WorkflowOpCoreF :<: F):
+  def coalesceAll[F[a] <: ACopK[a]: Functor](implicit I: WorkflowOpCoreF :<<: F):
       Coalesce[F] = new Coalesce[F] {
     def coalesceƒ:
         F[Fix[F]] => Option[F[Fix[F]]] = {
@@ -196,9 +198,7 @@ package object workflow {
     }
   }
 
-  def toPipelineOp[F[_]: Functor, A](op: PipelineF[F, A], base: DocVar)
-    (implicit I: F :<: WorkflowF)
-      : PipelineOp = {
+  def toPipelineOp[A](op: PipelineF[WorkflowF, A], base: DocVar) : PipelineOp = {
     val prefix = prefixBase(base)
 
     def rewriteCore(w: WorkflowOpCoreF[Unit]): PipelineF[WorkflowOpCoreF, Unit] =
@@ -223,11 +223,12 @@ package object workflow {
         case wf @ $AddFieldsF(_, _) => rewriteRefs3_4(prefix).apply(wf).pipeline
       }
 
-    def rewrite(w: F[Unit]): PipelineF[WorkflowF, Unit] = I.inj(w).run.fold(
-      wf => rewrite3_4(wf).fmap(ι, W34),
-      wf => rewriteCore(wf).fmap(ι, WC))
+    def rewrite(w: WorkflowF[Unit]): PipelineF[WorkflowF, Unit] = w.toDisjunction.fold(
+      wf => rewrite3_4(wf).fmap(ι, W34.inj),
+      wf => rewriteCore(wf).fmap(ι, WC.inj))
 
-    PipelineOp(rewrite(op.wf.void))
+    val f = rewrite(op.wf.void)
+    PipelineOp(f.wf, f.bson)
   }
 
   // helper for rewriteRefs
@@ -290,13 +291,13 @@ package object workflow {
   }
 
 
-  def simpleShape[F[_]](op: Fix[F])(implicit I: F :<: WorkflowF): Option[List[BsonField.Name]] =
-    I.inj(op.unFix).run.fold[Option[List[BsonField.Name]]](
+  def simpleShape[F[a] <: ACopK[a]](op: Fix[F])(implicit I: F :<<: WorkflowF): Option[List[BsonField.Name]] =
+    I.inj(op.unFix).toDisjunction.fold[Option[List[BsonField.Name]]](
       simpleShape34, simpleShape32)
 
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-  def simpleShape32[F[_]](wf: WorkflowOpCoreF[Fix[F]])
-    (implicit I: F :<: WorkflowF)
+  def simpleShape32[F[a] <: ACopK[a]](wf: WorkflowOpCoreF[Fix[F]])
+    (implicit I: F :<<: WorkflowF)
       : Option[List[BsonField.Name]] = {
     wf match {
         case $PureF(Bson.Doc(value))          =>
@@ -323,8 +324,8 @@ package object workflow {
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
-  def simpleShape34[F[_]](wf: WorkflowOp3_4F[Fix[F]])
-    (implicit I: F :<: WorkflowF)
+  def simpleShape34[F[a] <: ACopK[a]](wf: WorkflowOp3_4F[Fix[F]])
+    (implicit I: F :<<: WorkflowF)
       : Option[List[BsonField.Name]] = {
     wf match {
         case $AddFieldsF(src, Reshape(value)) =>
@@ -451,7 +452,7 @@ package object workflow {
   def chain[A](src: A, op1: A => A, ops: (A => A)*): A =
     ops.foldLeft(op1(src))((s, o) => o(s))
 
-  implicit def workflowFCrush(implicit I: WorkflowOpCoreF :<: WorkflowF):
+  implicit def workflowFCrush(implicit I: WorkflowOpCoreF :<<: WorkflowF):
       Crush[WorkflowF] =
     new Crush[WorkflowF] {
       @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
@@ -477,7 +478,7 @@ package object workflow {
                   selection = Some(rewriteRefs3_2(prefixBase(base)).apply(Functor[WorkflowOpCoreF].void(op).asInstanceOf[$MatchF[T[WorkflowOpCoreF]]]).selector)),
                 None))
           }
-          pipeline($MatchF[T[WorkflowF]](src, selector).shapePreserving.fmap(ι, I)) match {
+          pipeline($MatchF[T[WorkflowF]](src, selector).shapePreserving.fmap(ι, I.inj)) match {
             case Some((base, up, mine)) => (base, PipelineTask(up, mine))
             case None                   => nonPipeline
           }
@@ -621,9 +622,9 @@ package object workflow {
     }
 
 
-  private def wrapArrayLit[EX[_]: Functor]
+  private def wrapArrayLit[EX[a] <: ACopK[a]: Functor]
     (accum: AccumOp[Fix[EX]])
-    (implicit ev: ExprOpCoreF :<: EX)
+    (implicit ev: ExprOpCoreF :<<: EX)
       : AccumOp[Fix[EX]] = {
 
     def wrap(expr: Fix[EX]): Fix[EX] = (wrapArrayInLet[Fix, EX](expr.unFix)).embed
@@ -631,16 +632,16 @@ package object workflow {
     accum map wrap
   }
 
-  private def wrapArrayLitExprInLet[EX[_]: Functor]
+  private def wrapArrayLitExprInLet[EX[a] <: ACopK[a]: Functor]
     (grouped: Grouped[EX])
-    (implicit ev: ExprOpCoreF :<: EX, ev2: ExprOpOps.Uni[ExprOp])
+    (implicit ev: ExprOpCoreF :<<: EX, ev2: ExprOpOps.Uni[ExprOp])
       : Grouped[EX] =
     Grouped(ListMap(grouped.value.mapValues(wrapArrayLit[EX]).toSeq: _*))
 
   // NB: no need for a typeclass if implementing this way, but it will be needed
   // as soon as we need to match on anything here that isn't in core.
-  implicit def crystallizeWorkflowF[F[_]: Functor: Classify: Coalesce: Refs](
-    implicit I: WorkflowOpCoreF :<: F, ev1: F :<: WorkflowF, ev2: ExprOpOps.Uni[ExprOp]):
+  implicit def crystallizeWorkflowF[F[a] <: ACopK[a]: Functor: Classify: Coalesce: Refs](
+    implicit I: WorkflowOpCoreF :<<: F, ev1: F :<<: WorkflowF, ev2: ExprOpOps.Uni[ExprOp]):
       Crystallize[F] =
     new Crystallize[F] {
       // probable conversions
@@ -729,7 +730,7 @@ package object workflow {
       val finalValue = jscore.Name("__finalVal")
     }
 
-  implicit def workflowRenderTree[T[_[_]]: RecursiveT, F[_]: Traverse: Classify](implicit ev0: WorkflowOpCoreF :<: F, ev1: RenderTree[F[Unit]]): RenderTree[T[F]] =
+  implicit def workflowRenderTree[T[_[_]]: RecursiveT, F[a] <: ACopK[a]: Traverse: Classify](implicit ev0: WorkflowOpCoreF :<<: F, ev1: RenderTree[F[Unit]]): RenderTree[T[F]] =
     new RenderTree[T[F]] {
       val wfType = "Workflow" :: Nil
 

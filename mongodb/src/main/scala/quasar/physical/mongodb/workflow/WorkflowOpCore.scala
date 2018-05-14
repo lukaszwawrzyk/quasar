@@ -44,13 +44,13 @@ sealed abstract class WorkflowOpCoreF[+A] extends Product with Serializable
 
 final case class $PureF(value: Bson) extends WorkflowOpCoreF[Nothing]
 object $pure {
-  def apply[F[_]: Coalesce](value: Bson)(implicit I: WorkflowOpCoreF :<: F) =
+  def apply[F[a] <: ACopK[a]: Coalesce](value: Bson)(implicit I: WorkflowOpCoreF :<<: F) =
     Fix(Coalesce[F].coalesce(I.inj($PureF(value))))
 }
 
 final case class $ReadF(coll: Collection) extends WorkflowOpCoreF[Nothing]
 object $read {
-  def apply[F[_]: Coalesce](coll: Collection)(implicit I: WorkflowOpCoreF :<: F) =
+  def apply[F[a] <: ACopK[a]: Coalesce](coll: Collection)(implicit I: WorkflowOpCoreF :<<: F) =
     Fix(Coalesce[F].coalesce(I.inj($ReadF(coll))))
 }
 
@@ -68,8 +68,8 @@ final case class $MatchF[A](src: A, selector: Selector)
     }
 }
 object $match {
-  def apply[F[_]: Coalesce](selector: Selector)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](selector: Selector)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($MatchF(src, selector))))
 }
 
@@ -151,12 +151,12 @@ object $ProjectF {
   def EmptyDoc[A](src: A) = $ProjectF(src, Reshape.emptyDoc[ExprOp], ExcludeId)
 }
 object $project {
-  def apply[F[_]: Coalesce](shape: Reshape[ExprOp], id: IdHandling)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](shape: Reshape[ExprOp], id: IdHandling)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($ProjectF(src, shape, id))))
 
-  def apply[F[_]: Coalesce](shape: Reshape[ExprOp])
-    (implicit ev: WorkflowOpCoreF :<: F)
+  def apply[F[a] <: ACopK[a]: Coalesce](shape: Reshape[ExprOp])
+    (implicit ev: WorkflowOpCoreF :<<: F)
     : FixOp[F] =
     $project[F](
       shape,
@@ -185,8 +185,8 @@ object $RedactF {
   val KEEP    = DocVar(DocVar.Name("KEEP"),     None)
 }
 object $redact {
-  def apply[F[_]: Coalesce](value: Fix[ExprOp])
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](value: Fix[ExprOp])
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($RedactF(src, value))))
 }
 
@@ -204,8 +204,8 @@ final case class $LimitF[A](src: A, count: Long)
     }
 }
 object $limit {
-  def apply[F[_]: Coalesce](count: Long)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](count: Long)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($LimitF(src, count))))
 }
 
@@ -223,8 +223,8 @@ final case class $SkipF[A](src: A, count: Long)
     }
 }
 object $skip {
-  def apply[F[_]: Coalesce](count: Long)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](count: Long)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($SkipF(src, count))))
 }
 
@@ -252,8 +252,8 @@ final case class $UnwindF[A](
   lazy val flatmapop = $SimpleMapF(src, NonEmptyList(FlatExpr(field.toJs)), ListMap())
 }
 object $unwind {
-  def apply[F[_]: Coalesce](field: DocVar, includeArrayIndex: Option[BsonField.Name], preserveNullAndEmptyArrays: Option[Boolean])
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](field: DocVar, includeArrayIndex: Option[BsonField.Name], preserveNullAndEmptyArrays: Option[Boolean])
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($UnwindF(src, field, includeArrayIndex, preserveNullAndEmptyArrays))))
 }
 
@@ -285,8 +285,8 @@ final case class $GroupF[A](src: A, grouped: Grouped[ExprOp], by: Reshape.Shape[
   def setAll(vs: Seq[(BsonField.Name, AccumOp[Fix[ExprOp]])]) = copy(grouped = Grouped[ExprOp](ListMap(vs: _*)))
 }
 object $group {
-  def apply[F[_]: Coalesce](grouped: Grouped[ExprOp], by: Reshape.Shape[ExprOp])
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](grouped: Grouped[ExprOp], by: Reshape.Shape[ExprOp])
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($GroupF(src, grouped, by))))
 }
 
@@ -309,8 +309,8 @@ object $SortF {
     Bson.Doc(ListMap((value.map { case (k, t) => k.asText -> sortDirToBson(t) }).list.toList: _*))
 }
 object $sort {
-  def apply[F[_]: Coalesce](value: NonEmptyList[(BsonField, SortDir)])
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](value: NonEmptyList[(BsonField, SortDir)])
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($SortF(src, value))))
 }
 
@@ -337,8 +337,8 @@ final case class $OutF[A](src: A, collection: CollectionName)
     }
 }
 object $out {
-  def apply[F[_]: Coalesce](collection: CollectionName)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](collection: CollectionName)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($OutF(src, collection))))
 }
 
@@ -372,13 +372,13 @@ final case class $GeoNearF[A](
     }
 }
 object $geoNear {
-  def apply[F[_]: Coalesce]
+  def apply[F[a] <: ACopK[a]: Coalesce]
     (near: (Double, Double), distanceField: BsonField,
       limit: Option[Int], maxDistance: Option[Double],
       query: Option[Selector], spherical: Option[Boolean],
       distanceMultiplier: Option[Double], includeLocs: Option[BsonField],
       uniqueDocs: Option[Boolean])
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
       src => Fix(Coalesce[F].coalesce(I.inj($GeoNearF(
         src, near, distanceField, limit, maxDistance, query, spherical, distanceMultiplier, includeLocs, uniqueDocs))))
 }
@@ -461,8 +461,8 @@ object $MapF {
           Js.Call(fn, List(Js.Select(Js.This, sigil.Id), Js.This))))))
 }
 object $map {
-  def apply[F[_]: Coalesce](fn: Js.AnonFunDecl, scope: Scope)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](fn: Js.AnonFunDecl, scope: Scope)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($MapF(src, fn, scope))))
 }
 
@@ -633,8 +633,8 @@ object $SimpleMapF {
         Js.Return(Js.Ident("dest"))))))
 }
 object $simpleMap {
-  def apply[F[_]: Coalesce](exprs: NonEmptyList[CardinalExpr[JsFn]], scope: Scope)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](exprs: NonEmptyList[CardinalExpr[JsFn]], scope: Scope)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($SimpleMapF(src, exprs, scope))))
 }
 
@@ -701,8 +701,8 @@ object $FlatMapF {
               List(Null, Ident("__rez")))))))))
 }
 object $flatMap {
-  def apply[F[_]: Coalesce](fn: Js.AnonFunDecl, scope: Scope)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](fn: Js.AnonFunDecl, scope: Scope)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($FlatMapF(src, fn, scope))))
 }
 
@@ -748,8 +748,8 @@ object $ReduceF {
       Js.Return(Js.Ident("rez"))))
 }
 object $reduce {
-  def apply[F[_]: Coalesce](fn: Js.AnonFunDecl, scope: Scope)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](fn: Js.AnonFunDecl, scope: Scope)
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($ReduceF(src, fn, scope))))
 }
 
@@ -758,8 +758,8 @@ object $reduce {
 final case class $FoldLeftF[A](head: A, tail: NonEmptyList[A])
     extends WorkflowOpCoreF[A]
 object $foldLeft {
-  def apply[F[_]: Coalesce](first: Fix[F], second: Fix[F], rest: Fix[F]*)
-    (implicit I: WorkflowOpCoreF :<: F): Fix[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](first: Fix[F], second: Fix[F], rest: Fix[F]*)
+    (implicit I: WorkflowOpCoreF :<<: F): Fix[F] =
     Fix(Coalesce[F].coalesce(I.inj($FoldLeftF(first, NonEmptyList.nel(second, IList.fromList(rest.toList))))))
 }
 
@@ -787,12 +787,12 @@ final case class $LookupF[A](
     }
 }
 object $lookup {
-  def apply[F[_]: Coalesce](
+  def apply[F[a] <: ACopK[a]: Coalesce](
     from: CollectionName,
     localField: BsonField,
     foreignField: BsonField,
     as: BsonField)
-    (implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+    (implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
       src => Fix(Coalesce[F].coalesce(I.inj($LookupF(src, from, localField, foreignField, as))))
 }
 
@@ -810,7 +810,7 @@ final case class $SampleF[A](src: A, size: Int)
     }
 }
 object $sample {
-  def apply[F[_]: Coalesce](size: Int)(implicit I: WorkflowOpCoreF :<: F): FixOp[F] =
+  def apply[F[a] <: ACopK[a]: Coalesce](size: Int)(implicit I: WorkflowOpCoreF :<<: F): FixOp[F] =
     src => Fix(Coalesce[F].coalesce(I.inj($SampleF(src, size))))
 }
 
@@ -854,7 +854,6 @@ object WorkflowOpCoreF {
 
   implicit val crush: Crush[WorkflowOpCoreF] = Crush.injected[WorkflowOpCoreF, WorkflowF]
 
-  implicit val coalesce: Coalesce[WorkflowOpCoreF] = coalesceAll[WorkflowOpCoreF]
   implicit val classify: Classify[WorkflowOpCoreF] =
     new Classify[WorkflowOpCoreF] {
       override def source[A](op: WorkflowOpCoreF[A]) = op match {

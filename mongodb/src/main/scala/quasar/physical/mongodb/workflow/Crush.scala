@@ -23,6 +23,7 @@ import matryoshka._
 import matryoshka.implicits._
 import scalaz._, Scalaz._
 import simulacrum.typeclass
+import quasar.fp.{:<<:, ACopK}
 
 /** Operations that are applied to a completed workflow to produce an
   * executable WorkflowTask. NB: when this is applied, information about the
@@ -36,7 +37,7 @@ import simulacrum.typeclass
       : (DocVar, WorkflowTask)
 }
 object Crush {
-  implicit def injected[F[_]: Functor, G[_]: Functor](implicit I: F :<: G, CG: Crush[G]):
+  implicit def injected[F[_]: Functor, G[a] <: ACopK[a]: Functor](implicit I: F :<<: G, CG: Crush[G]):
       Crush[F] =
     new Crush[F] {
       def crush[T[_[_]]: BirecursiveT](op: F[(T[F], (DocVar, WorkflowTask))]) =
