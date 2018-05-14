@@ -18,6 +18,7 @@ package quasar.yggdrasil.vfs
 
 import quasar.contrib.pathy.{ADir, RPath}
 import quasar.fs.MoveSemantics
+import quasar.fp.TwoElemCopKOps
 
 import fs2.{Stream, Sink}
 
@@ -26,7 +27,7 @@ import org.specs2.scalaz.ScalazMatchers._
 
 import pathy.Path
 
-import scalaz.{Coproduct, Need}
+import scalaz.Need
 import scalaz.concurrent.Task
 import scalaz.syntax.monad._
 
@@ -41,7 +42,7 @@ object FreeVFSSpecs extends Specification {
   import POSIXOp._
   import StreamTestUtils._
 
-  type S[A] = Coproduct[POSIXOp, Task, A]
+  type S[A] = POSIXWithTaskCopK[A]
 
   val H = Harness[S, Task]
 
@@ -1321,12 +1322,12 @@ object FreeVFSSpecs extends Specification {
   }
 
   object CPR {
-    def unapply[A](cp: Coproduct[POSIXOp, Task, A]): Option[Task[A]] =
-      cp.run.toOption
+    def unapply[A](cp: S[A]): Option[Task[A]] =
+      cp.toDisjunction.toOption
   }
 
   object CPL {
-    def unapply[A](cp: Coproduct[POSIXOp, Task, A]): Option[POSIXOp[A]] =
-      cp.run.swap.toOption
+    def unapply[A](cp: S[A]): Option[POSIXOp[A]] =
+      cp.toDisjunction.swap.toOption
   }
 }

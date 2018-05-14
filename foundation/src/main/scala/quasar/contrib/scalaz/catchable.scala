@@ -15,6 +15,7 @@
  */
 
 package quasar.contrib.scalaz
+import quasar.fp.{:<<:, ACopK}
 
 import slamdata.Predef._
 
@@ -25,7 +26,10 @@ import scalaz.concurrent.Task
 
 trait CatchableInstances {
   implicit def injectableTaskCatchable[S[_]](implicit I: Task :<: S): Catchable[Free[S, ?]] =
-    catchable.freeCatchable[Task, S]
+    catchable.freeCatchable[Task, S](λ[Task ~> S](I inj _), λ[S ~> λ[a => Option[Task[a]]]](I prj _))
+
+  implicit def injectableTaskCatchableCopK[S[a] <: ACopK[a]](implicit I: Task :<<: S): Catchable[Free[S, ?]] =
+    catchable.freeCatchable[Task, S](I.inj, I.prj)
 }
 
 final class CatchableOps[F[_], A] private[scalaz] (self: F[A])(implicit F0: Catchable[F]) {
@@ -99,20 +103,23 @@ trait ToCatchableOps {
 }
 
 object catchable extends CatchableInstances with ToCatchableOps {
-  def freeCatchable[F[_], S[_]](implicit F: Catchable[F], I: F :<: S): Catchable[Free[S, ?]] =
+  def freeCatchable[F[_], S[_]](
+    inj: F ~> S, prj: S ~> λ[a => Option[F[a]]]
+  )(implicit F: Catchable[F]): Catchable[Free[S, ?]] =
     new Catchable[Free[S, ?]] {
       type ExceptT[X[_], A] = EitherT[X, Throwable, A]
 
       private val attemptT: S ~> ExceptT[Free[S, ?], ?] =
         λ[S ~> ExceptT[Free[S, ?], ?]](sa =>
-          EitherT(I.prj(sa).fold(
+          EitherT(prj(sa).fold(
             Free.liftF(sa) map (_.right[Throwable]))
-            { case fa => Free.liftF(I(F.attempt(fa))) }))
+          { case fa => Free.liftF(inj(F.attempt(fa))) }))
 
       def attempt[A](fa: Free[S, A]) =
         fa.foldMap(attemptT).run
 
       def fail[A](t: Throwable) =
-        Free.liftF(I(F.fail[A](t)))
+        Free.liftF(inj(F.fail[A](t)))
     }
+
 }
