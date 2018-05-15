@@ -43,7 +43,7 @@ object WorkflowBuilderF {
   import WorkflowBuilder._
 
   // NB: This instance can’t be derived, because of `dummyOp`.
-  implicit def equal[F[_]: Coalesce](implicit ev: WorkflowOpCoreF :<: F): Delay[Equal, WorkflowBuilderF[F, ?]] =
+  implicit def equal[F[_]: Coalesce](implicit ev: WorkflowOpCoreF :<<: F): Delay[Equal, WorkflowBuilderF[F, ?]] =
     new Delay[Equal, WorkflowBuilderF[F, ?]] {
       def apply[A](eq: Equal[A]) = {
         implicit val eqA: Equal[A] = eq
@@ -93,7 +93,7 @@ object WorkflowBuilderF {
   implicit def renderTree[F[_]: Coalesce: Functor](implicit
       RG: RenderTree[ListMap[BsonField.Name, AccumOp[Fix[ExprOp]]]],
       RF: RenderTree[Fix[F]],
-      ev: WorkflowOpCoreF :<: F
+      ev: WorkflowOpCoreF :<<: F
     ): Delay[RenderTree, WorkflowBuilderF[F, ?]] =
     Delay.fromNT(λ[RenderTree ~> (RenderTree ∘ WorkflowBuilderF[F, ?])#λ](rt => {
       val nodeType = "WorkflowBuilder" :: Nil
@@ -623,8 +623,8 @@ object WorkflowBuilder {
     }
   }
 
-  def build[M[_]: Monad, F[_]: Coalesce](wb: WorkflowBuilder[F], queryModel: MongoQueryModel)
-    (implicit M: MonadError_[M, PlannerError], ev0: WorkflowOpCoreF :<: F, ev1: RenderTree[WorkflowBuilder[F]], ev2: ExprOpOps.Uni[ExprOp])
+  def build[M[_]: Monad, F[a] <: ACopK[a]: Coalesce](wb: WorkflowBuilder[F], queryModel: MongoQueryModel)
+    (implicit M: MonadError_[M, PlannerError], ev0: WorkflowOpCoreF :<<: F, ev1: RenderTree[WorkflowBuilder[F]], ev2: ExprOpOps.Uni[ExprOp])
       : M[Fix[F]] =
     (wb: Fix[WorkflowBuilderF[F, ?]]).cataM(AlgebraMZip[M, WorkflowBuilderF[F, ?]].zip(toWorkflow[M, F](queryModel), schema.generalizeM[M])) ∘ {
       case ((graph, Root()), _)      => graph
@@ -692,7 +692,7 @@ object WorkflowBuilder {
     }
   }
 
-  final class Ops[F[_]: Coalesce](implicit ev0: WorkflowOpCoreF :<: F, ev1: ExprOpOps.Uni[ExprOp]) {
+  final class Ops[F[_]: Coalesce](implicit ev0: WorkflowOpCoreF :<<: F, ev1: ExprOpOps.Uni[ExprOp]) {
     def read(coll: Collection): WorkflowBuilder[F] =
       CollectionBuilder($read[F](coll), Root(), None)
 
@@ -768,7 +768,7 @@ object WorkflowBuilder {
         })
   }
   object Ops {
-    implicit def apply[F[_]: Coalesce](implicit ev0: WorkflowOpCoreF :<: F, ev1: ExprOpOps.Uni[ExprOp]): Ops[F] =
+    implicit def apply[F[_]: Coalesce](implicit ev0: WorkflowOpCoreF :<<: F, ev1: ExprOpOps.Uni[ExprOp]): Ops[F] =
       new Ops[F]
   }
 }

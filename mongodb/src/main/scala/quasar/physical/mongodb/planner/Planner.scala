@@ -20,6 +20,7 @@ import slamdata.Predef._
 import quasar._
 import quasar.contrib.pathy.{ADir, AFile}
 import quasar.fp.ski._
+import quasar.fp.{:<<:, ACopK}
 import quasar.fs.MonadFsErr
 import quasar.physical.mongodb.WorkflowBuilder, WorkflowBuilder._
 import quasar.physical.mongodb.expression._
@@ -34,14 +35,14 @@ trait Planner[F[_]] {
   type IT[G[_]]
 
   def plan
-    [M[_]: Monad: ExecTimeR: MonadFsErr, WF[_]: Functor: Coalesce: Crush, EX[_]: Traverse]
+    [M[_]: Monad: ExecTimeR: MonadFsErr, WF[a] <: ACopK[a]: Functor: Coalesce: Crush, EX[a] <: ACopK[a]: Traverse]
     (cfg: PlannerConfig[IT, EX, WF, M])
     (implicit
-      ev0: WorkflowOpCoreF :<: WF,
+      ev0: WorkflowOpCoreF :<<: WF,
       ev1: RenderTree[WorkflowBuilder[WF]],
       ev2: WorkflowBuilder.Ops[WF],
-      ev3: ExprOpCoreF :<: EX,
-      ev4: EX :<: ExprOp):
+      ev3: ExprOpCoreF :<<: EX,
+      ev4: Injectable.Aux[EX, ExprOp]):
       AlgebraM[M, F, WorkflowBuilder[WF]]
 }
 
@@ -73,14 +74,14 @@ object Planner {
     new Planner[Coproduct[F, G, ?]] {
       type IT[G[_]] = T[G]
       def plan
-        [M[_]: Monad: ExecTimeR: MonadFsErr, WF[_]: Functor: Coalesce: Crush, EX[_]: Traverse]
+        [M[_]: Monad: ExecTimeR: MonadFsErr, WF[a] <: ACopK[a]: Functor: Coalesce: Crush, EX[a] <: ACopK[a]: Traverse]
         (cfg: PlannerConfig[T, EX, WF, M])
         (implicit
-          ev0: WorkflowOpCoreF :<: WF,
+          ev0: WorkflowOpCoreF :<<: WF,
           ev1: RenderTree[WorkflowBuilder[WF]],
           ev2: WorkflowBuilder.Ops[WF],
-          ev3: ExprOpCoreF :<: EX,
-          ev4: EX :<: ExprOp) =
+          ev3: ExprOpCoreF :<<: EX,
+          ev4: Injectable.Aux[EX, ExprOp]) =
         _.run.fold(
           F.plan[M, WF, EX](cfg),
           G.plan[M, WF, EX](cfg))
@@ -94,14 +95,14 @@ object Planner {
       type IT[G[_]] = T[G]
 
       def plan
-        [M[_]: Monad: ExecTimeR: MonadFsErr, WF[_]: Functor: Coalesce: Crush, EX[_]: Traverse]
+        [M[_]: Monad: ExecTimeR: MonadFsErr, WF[a] <: ACopK[a]: Functor: Coalesce: Crush, EX[a] <: ACopK[a]: Traverse]
         (cfg: PlannerConfig[T, EX, WF, M])
         (implicit
-          ev0: WorkflowOpCoreF :<: WF,
+          ev0: WorkflowOpCoreF :<<: WF,
           ev1: RenderTree[WorkflowBuilder[WF]],
           ev2: WorkflowBuilder.Ops[WF],
-          ev3: ExprOpCoreF :<: EX,
-          ev4: EX :<: ExprOp) =
+          ev3: ExprOpCoreF :<<: EX,
+          ev4: Injectable.Aux[EX, ExprOp]) =
         κ(raiseInternalError(s"should not be reached: $label"))
     }
 

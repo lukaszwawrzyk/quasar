@@ -21,11 +21,12 @@ import slamdata.Predef._
 import matryoshka._
 import matryoshka.implicits._
 import scalaz._, Scalaz._
+import quasar.fp.{:<<:, ACopK}
 
 object needsMapBeforeSort {
 
-  def apply[T[_[_]]: BirecursiveT, F[_]: Traverse](wf: T[F])
-    (implicit I: WorkflowOpCoreF :<: F)
+  def apply[T[_[_]]: BirecursiveT, F[a] <: ACopK[a]: Traverse](wf: T[F])
+    (implicit I: WorkflowOpCoreF :<<: F)
       : Boolean = {
     val alg: AlgebraM[Option, F, T[F]] = {
       case I($SimpleMapF(Embed(I($SortF(_, _))), _, _)) => none

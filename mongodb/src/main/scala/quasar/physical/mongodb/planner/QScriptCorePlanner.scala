@@ -57,15 +57,15 @@ class QScriptCorePlanner[T[_[_]]: BirecursiveT: EqualT: ShowT] extends
 
   def plan
     [M[_]: Monad: ExecTimeR: MonadFsErr,
-      WF[_]: Functor: Coalesce: Crush,
-      EX[_]: Traverse]
+      WF[a] <: ACopK[a]: Functor: Coalesce: Crush,
+      EX[a] <: ACopK[a]: Traverse]
     (cfg: PlannerConfig[T, EX, WF, M])
     (implicit
-      ev0: WorkflowOpCoreF :<: WF,
+      ev0: WorkflowOpCoreF :<<: WF,
       ev1: RenderTree[WorkflowBuilder[WF]],
       WB: WorkflowBuilder.Ops[WF],
-      ev3: ExprOpCoreF :<: EX,
-      ev4: EX :<: ExprOp) = {
+      ev3: ExprOpCoreF :<<: EX,
+      ev4: Injectable.Aux[EX, ExprOp]) = {
     case quasar.qscript.Map(src, f) =>
       getExprBuilder[T, M, WF, EX](cfg.funcHandler, cfg.staticHandler, cfg.bsonVersion)(src, f.linearize)
     case LeftShift(src, struct, id, shiftType, onUndef, repair) => {

@@ -98,14 +98,14 @@ object MongoDbPlanner {
   def buildWorkflow
     [T[_[_]]: BirecursiveT: EqualT: RenderTreeT: ShowT,
       M[_]: Monad: PhaseResultTell: MonadFsErr: ExecTimeR,
-      WF[_]: Functor: Coalesce: Crush,
-      EX[_]: Traverse]
+      WF[a] <: ACopK[a]: Functor: Coalesce: Crush,
+      EX[a] <: ACopK[a]: Traverse]
     (cfg: PlannerConfig[T, EX, WF, M])
     (qs: T[fs.MongoQScript[T, ?]])
     (implicit
-      ev0: WorkflowOpCoreF :<: WF,
-      ev1: ExprOpCoreF :<: EX,
-      ev2: EX :<: ExprOp,
+      ev0: WorkflowOpCoreF :<<: WF,
+      ev1: ExprOpCoreF :<<: EX,
+      ev2: Injectable.Aux[EX, ExprOp],
       ev3: RenderTree[Fix[WF]])
       : M[Fix[WF]] =
     for {
@@ -125,16 +125,16 @@ object MongoDbPlanner {
   def plan0
     [T[_[_]]: BirecursiveT: EqualT: RenderTreeT: ShowT,
       M[_]: Monad: ExecTimeR,
-      WF[_]: Traverse: Coalesce: Crush: Crystallize,
-      EX[_]: Traverse]
+      WF[a] <: ACopK[a]: Traverse: Coalesce: Crush: Crystallize,
+      EX[a] <: ACopK[a]: Traverse]
     (anyDoc: Collection => OptionT[M, BsonDocument],
       cfg: PlannerConfig[T, EX, WF, M])
     (qs: T[fs.MongoQScript[T, ?]])
     (implicit
-      ev0: WorkflowOpCoreF :<: WF,
+      ev0: WorkflowOpCoreF :<<: WF,
       ev1: WorkflowBuilder.Ops[WF],
-      ev2: ExprOpCoreF :<: EX,
-      ev3: EX :<: ExprOp,
+      ev2: ExprOpCoreF :<<: EX,
+      ev3: Injectable.Aux[EX, ExprOp],
       ev4: RenderTree[Fix[WF]],
       ME:  MonadFsErr[M],
       MT:  PhaseResultTell[M])
@@ -217,8 +217,8 @@ object MongoDbPlanner {
 
     val bsonVersion = toBsonVersion(queryModel)
 
-    def joinHandler[WF[_]: Functor: Coalesce: Crush: Crystallize]
-      (implicit ev0: Classify[WF], ev1: WorkflowOpCoreF :<: WF, ev2: RenderTree[WorkflowBuilder[WF]])
+    def joinHandler[WF[a] <: ACopK[a]: Functor: Coalesce: Crush: Crystallize]
+      (implicit ev0: Classify[WF], ev1: WorkflowOpCoreF :<<: WF, ev2: RenderTree[WorkflowBuilder[WF]])
         : JoinHandler[WF, WBM] =
       JoinHandler.fallback[WF, WBM](
         JoinHandler.pipeline[WBM, WF](queryModel, queryContext.statistics, queryContext.indexes),
@@ -226,6 +226,7 @@ object MongoDbPlanner {
 
     queryModel match {
       case `3.6` =>
+        import WorkflowOp3_4F.coalesce
         val cfg = PlannerConfig[T, Expr3_6, Workflow3_4F, M](
           joinHandler[Workflow3_4F],
           FuncHandler.handle3_6[MapFunc[T, ?], M](bsonVersion),

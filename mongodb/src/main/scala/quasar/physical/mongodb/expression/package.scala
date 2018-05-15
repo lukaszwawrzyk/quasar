@@ -18,7 +18,7 @@ package quasar.physical.mongodb
 
 import slamdata.Predef._
 import quasar.{RenderTree, Terminal}
-import quasar.fp.{:<<:, ACopK}
+import quasar.fp.{:<<:, ACopK, copkTraverse}
 
 import matryoshka._
 import matryoshka.data.Fix

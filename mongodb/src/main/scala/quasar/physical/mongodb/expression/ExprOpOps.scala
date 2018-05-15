@@ -42,7 +42,16 @@ trait ExprOpOps[IN[_]] {
     x => r0(x).getOrElse(Fix(I.inj(x)))
   }
 }
-object ExprOpOps {
+
+trait ExpOpOpsInstances {
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def copkexpropops[X <: iotaz.TListK, H[_]]: ExprOpOps.Uni[iotaz.CopK[X, ?]] = null
+
+}
+
+object ExprOpOps extends ExpOpOpsInstances {
   /** Useful in implementations, when you need to require an instance with a
     * certain "output" type. */
   type Aux[IN[_], F[_]] = ExprOpOps[IN] { type OUT[A] = F[A] }

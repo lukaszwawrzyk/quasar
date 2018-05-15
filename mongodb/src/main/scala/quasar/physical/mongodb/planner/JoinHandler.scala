@@ -82,14 +82,14 @@ object JoinHandler {
   /** When possible, plan a join using the more efficient \$lookup operator in
     * the aggregation pipeline.
     */
-  def pipeline[M[_]: Monad, WF[_]: Functor: Coalesce: Crush: Crystallize]
+  def pipeline[M[_]: Monad, WF[a] <: ACopK[a]: Functor: Coalesce: Crush: Crystallize]
     (queryModel: MongoQueryModel,
       stats: Collection => Option[CollectionStatistics],
       indexes: Collection => Option[Set[Index]])
     (implicit
       M: MonadError_[M, PlannerError],
       C: Classify[WF],
-      ev0: WorkflowOpCoreF :<: WF,
+      ev0: WorkflowOpCoreF :<<: WF,
       ev1: RenderTree[WorkflowBuilder[WF]],
       ev2: ExprOpOps.Uni[ExprOp])
     : JoinHandler[WF, OptionT[M, ?]] = JoinHandler({ (tpe, left, right) =>
@@ -233,7 +233,7 @@ object JoinHandler {
   /** Plan an arbitrary join using only "core" operators, which always means a
     * map-reduce.
     */
-  def mapReduce[M[_]: Monad, WF[_]: Functor: Coalesce: Crush: Crystallize]
+  def mapReduce[M[_]: Monad, WF[a] <: ACopK[a]: Functor: Coalesce: Crush: Crystallize]
     (queryModel: MongoQueryModel)
     (implicit M: MonadError[M, PlannerError], ev0: WorkflowOpCoreF :<: WF, ev1: RenderTree[WorkflowBuilder[WF]], ev2: ExprOpOps.Uni[ExprOp])
     : JoinHandler[WF, M] = JoinHandler({ (tpe, left0, right0) =>

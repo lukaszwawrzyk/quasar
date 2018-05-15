@@ -37,6 +37,11 @@ object Refs {
     }
   }
 
+
+  // TODO provide actual instance
+  @SuppressWarnings(Array("org.wartremover.warts.Null"))
+  implicit def refsCopk[X <: iotaz.TListK]: Refs[iotaz.CopK[X, ?]] = null
+
   implicit def coproduct[F[_], G[_]](implicit RF: Refs[F], RG: Refs[G]):
       Refs[Coproduct[F, G, ?]] =
     new Refs[Coproduct[F, G, ?]] {

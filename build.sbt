@@ -467,6 +467,7 @@ lazy val mongodb = project
   .settings(isolatedBackendSettings("quasar.physical.mongodb.MongoDb$"))
   .settings(excludeTypelevelScalaLibrary)
   .enablePlugins(AutomateHeaderPlugin)
+  .settings(scalacOptions += "-Xprint:typer")
 
 /** A connector outline, meant to be copied and incrementally filled in while
   * implementing a new connector.

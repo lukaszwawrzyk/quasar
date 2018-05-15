@@ -26,6 +26,7 @@ import quasar.physical.mongodb.planner.common._
 import quasar.physical.mongodb.planner.workflow._
 import quasar.physical.mongodb.workflow._
 import quasar.qscript._
+import quasar.fp.{:<<:, ACopK}
 
 import matryoshka._
 import scalaz._, Scalaz._
@@ -36,14 +37,14 @@ class EquiJoinPlanner[T[_[_]]: BirecursiveT: EqualT: ShowT] extends
   type IT[G[_]] = T[G]
 
   def plan
-    [M[_]: Monad: ExecTimeR: MonadFsErr, WF[_]: Functor: Coalesce: Crush, EX[_]: Traverse]
+    [M[_]: Monad: ExecTimeR: MonadFsErr, WF[a] <: ACopK[a]: Functor: Coalesce: Crush, EX[a] <: ACopK[a]: Traverse]
     (cfg: PlannerConfig[T, EX, WF, M])
     (implicit
-      ev0: WorkflowOpCoreF :<: WF,
+      ev0: WorkflowOpCoreF :<<: WF,
       ev1: RenderTree[WorkflowBuilder[WF]],
       ev2: WorkflowBuilder.Ops[WF],
-      ev3: ExprOpCoreF :<: EX,
-      ev4: EX :<: ExprOp) =
+      ev3: ExprOpCoreF :<<: EX,
+      ev4: Injectable.Aux[EX, ExprOp]) =
     qs =>
   (rebaseWB[T, M, WF, EX](cfg, qs.lBranch, qs.src) ⊛
     rebaseWB[T, M, WF, EX](cfg, qs.rBranch, qs.src))(

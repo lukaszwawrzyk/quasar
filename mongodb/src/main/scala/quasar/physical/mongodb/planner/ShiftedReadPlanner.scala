@@ -28,6 +28,7 @@ import quasar.physical.mongodb.planner.common._
 import quasar.physical.mongodb.planner.workflow._
 import quasar.physical.mongodb.workflow.{ExcludeId => _, IncludeId => _, _}
 import quasar.qscript._
+import quasar.fp.{:<<:, ACopK}
 
 import matryoshka._
 import scalaz._, Scalaz._
@@ -37,14 +38,14 @@ class ShiftedReadPlanner[T[_[_]]: BirecursiveT: ShowT] extends Planner[Const[Shi
   type IT[G[_]] = T[G]
 
   def plan
-    [M[_]: Monad: ExecTimeR: MonadFsErr, WF[_]: Functor: Coalesce: Crush, EX[_]: Traverse]
+    [M[_]: Monad: ExecTimeR: MonadFsErr, WF[a] <: ACopK[a]: Functor: Coalesce: Crush, EX[a] <: ACopK[a]: Traverse]
     (cfg: PlannerConfig[T, EX, WF, M])
     (implicit
-      ev0: WorkflowOpCoreF :<: WF,
+      ev0: WorkflowOpCoreF :<<: WF,
       ev1: RenderTree[WorkflowBuilder[WF]],
       WB: WorkflowBuilder.Ops[WF],
-      ev3: ExprOpCoreF :<: EX,
-      ev4: EX :<: ExprOp) =
+      ev3: ExprOpCoreF :<<: EX,
+      ev4: Injectable.Aux[EX, ExprOp]) =
     qs => Collection
       .fromFile(qs.getConst.path)
       .fold(

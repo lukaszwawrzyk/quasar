@@ -265,6 +265,7 @@ object ExprOpCoreF {
 
     val fp = fixpoint[Fix[F], F](Fix(_))
 
+    val rzal = 2
     def simplify: AlgebraM[Option, ExprOpCoreF, Fix[F]] = {
       case $condF(Fix($literalF(Bson.Bool(true))),  c, _) => c.some
       case $condF(Fix($literalF(Bson.Bool(false))), _, a) => a.some

@@ -641,7 +641,7 @@ package object workflow {
   // NB: no need for a typeclass if implementing this way, but it will be needed
   // as soon as we need to match on anything here that isn't in core.
   implicit def crystallizeWorkflowF[F[a] <: ACopK[a]: Functor: Classify: Coalesce: Refs](
-    implicit I: WorkflowOpCoreF :<<: F, ev1: F :<<: WorkflowF, ev2: ExprOpOps.Uni[ExprOp]):
+    implicit I: WorkflowOpCoreF :<<: F, ev2: ExprOpOps.Uni[ExprOp]):
       Crystallize[F] =
     new Crystallize[F] {
       // probable conversions
