@@ -69,6 +69,27 @@ import scalaz.syntax.monad._
 import shapeless.Sized
 import iotaz.CopK
 
+@SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements", "org.wartremover.warts.Var"))
+object Kurde {
+  var i = 0
+  var j = 0
+  def register() = {
+    i += 1
+  }
+  def between(f: Int, t: Int) = j >= f && j <= t
+  def at(a: Int) = between(a, a)
+  def print(ss: Any*) = if (between(17, 18)) {
+    /*println(ss.mkString(" "))*/
+  }
+  def print2(ss: Any*) = if (at(18)) {
+    println(ss.mkString(" "))
+  }
+
+  def register2() = {
+    j += 1
+  }
+}
+
 final class ReadLP[T[_[_]]: BirecursiveT] private () extends QSUTTypes[T] {
 
   import QSUGraph.Extractors._
@@ -78,17 +99,14 @@ final class ReadLP[T[_[_]]: BirecursiveT] private () extends QSUTTypes[T] {
   private val IC = CopK.Inject[MapFuncCore, MapFunc]
   private val ID = CopK.Inject[MapFuncDerived, MapFunc]
 
-  def apply[
-      F[_]: Monad: PlannerErrorME: NameGenerator](
-      plan: T[lp.LogicalPlan]): F[QSUGraph] =
-    plan.cataM[StateT[F, RevIdx, ?], QSUGraph](
-      readLPƒ[StateT[F, RevIdx, ?]]).eval(SMap())
-
   @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements"))
   def readLPƒ[
-      G[_]: Monad: PlannerErrorME: NameGenerator](
-      implicit MS: MonadState_[G, RevIdx])
-      : AlgebraM[G, lp.LogicalPlan, QSUGraph] = {
+  G[_] : Monad : PlannerErrorME : NameGenerator](
+    MS: MonadState_[G, RevIdx])
+  : AlgebraM[G, lp.LogicalPlan, QSUGraph] = {
+    implicit val MSS = MS
+
+    {
 
     case lp.Read(path) =>
       val afile = mkAbsolute(rootDir[Sandboxed], path)
@@ -110,6 +128,8 @@ final class ReadLP[T[_[_]]: BirecursiveT] private () extends QSUTTypes[T] {
             NonRepresentableData(d).left
         },
         { ejson: T[EJson] => IC(MapFuncsCore.Constant(ejson)).right })
+
+      Kurde.print("back0", back)
 
       PlannerErrorME[G]
         .unattempt(back.point[G])
@@ -229,14 +249,20 @@ final class ReadLP[T[_[_]]: BirecursiveT] private () extends QSUTTypes[T] {
       val graphs = src <:: order.map(_._1)
 
       withName[G](node).map(g => graphs.foldLeft(g)(_ :++ _))
-  }
+  }}
 
   private def nullary[G[_]: Monad: NameGenerator: MonadState_[?[_], RevIdx]](func: MapFunc[Hole])
-      : G[QSUGraph] =
+      : G[QSUGraph] = {
+    Kurde.print("nullary with ", func)
     for {
       source <- withName[G](QSU.Unreferenced[T, Symbol]())
+      x = Kurde.print("src", source)
       back <- extend1[G](source)(QSU.Unary[T, Symbol](_, func))
-    } yield back
+    } yield {
+      Kurde.print("back", back)
+      back
+    }
+  }
 
   private def projectConstIdx[G[_]: Monad: NameGenerator: MonadState_[?[_], RevIdx]](
       idx: Int)(
@@ -262,9 +288,21 @@ final class ReadLP[T[_[_]]: BirecursiveT] private () extends QSUTTypes[T] {
       QSU.AutoJoin3[T, Symbol](e1, e2, e3, Free.liftF(constr(LeftSide3, Center, RightSide3))))
 
   private def extend1[G[_]: Monad: NameGenerator: MonadState_[?[_], RevIdx]](
-      parent: QSUGraph)(
-      constr: Symbol => QSU[Symbol]): G[QSUGraph] =
-    withName[G](constr(parent.root)).map(_ :++ parent)
+    parent: QSUGraph)(
+    constr: Symbol => QSU[Symbol]): G[QSUGraph] = {
+    Kurde.print("extending", parent, "usin", constr)
+    withName[G]({
+      val z = constr(parent.root)
+      Kurde.print("with name arg as ", z)
+      z
+    }).map { z =>
+      Kurde.print("maping", z)
+      Kurde.print("concating it with", parent)
+      val q = z :++ parent
+      Kurde.print("producing", q)
+      q
+    }
+  }
 
   private def extend2[G[_]: Monad: NameGenerator: MonadState_[?[_], RevIdx]](
       parent1: QSUGraph, parent2: QSUGraph)(
@@ -288,11 +326,30 @@ final class ReadLP[T[_[_]]: BirecursiveT] private () extends QSUTTypes[T] {
   }
 }
 
+import scalaz.EitherT
 object ReadLP {
+  @SuppressWarnings(Array("org.wartremover.warts.NonUnitStatements", "org.wartremover.warts.StringPlusAny"))
   def apply[
       T[_[_]]: BirecursiveT,
-      F[_]: Monad: PlannerErrorME: NameGenerator]
-      (plan: T[lp.LogicalPlan])
-      : F[QSUGraph[T]] =
-    taggedInternalError("ReadLP", new ReadLP[T].apply[F](plan))
+      M[_]: Monad]
+      (plan: T[lp.LogicalPlan])(implicit
+        Ku: PlannerErrorME[EitherT[StateT[M, Long, ?], PlannerError, ?]],
+        R: NameGenerator[EitherT[StateT[M, Long, ?], PlannerError, ?]],
+        W: Monad[EitherT[StateT[M, Long, ?], PlannerError, ?]],
+        SSS: scalaz.Show[T[lp.LogicalPlan]],
+        ZZZ: scalaz.Show[lp.LogicalPlan[QSUGraph[T]]]
+      )
+      : EitherT[StateT[M, Long, ?], PlannerError, QSUGraph[T]] = {
+    type F[x] = EitherT[StateT[M, Long, ?], PlannerError, x]
+    val r = new ReadLP[T]
+    plan.cataM[StateT[F, r.RevIdx, ?], r.QSUGraph] {
+      x => {
+        Kurde.register()
+        Kurde.print("GOT: " + x)
+        val res = r.readLPƒ[StateT[F, r.RevIdx, ?]](scala.Predef.implicitly[MonadState_[StateT[F, r.RevIdx, ?], r.RevIdx]]).apply(x)
+        Kurde.print("RES: " + res.eval(SMap()).run.eval(0))
+        res
+      }
+    }.eval(SMap())
+  }
 }

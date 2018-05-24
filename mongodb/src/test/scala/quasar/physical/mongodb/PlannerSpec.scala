@@ -25,11 +25,11 @@ import quasar.sql._
 import scala.Either
 
 import eu.timepit.refined.auto._
-import matryoshka._
+//import matryoshka._
 import matryoshka.data.Fix
-import matryoshka.implicits._
+//import matryoshka.implicits._
 import org.specs2.matcher._
-import scalaz._, Scalaz._
+import scalaz._/*, Scalaz._*/
 
 class PlannerSpec extends
     PlannerWorkflowHelpers with
@@ -38,7 +38,7 @@ class PlannerSpec extends
   // to write the new actuals:
   // override val mode = WriteMode
 
-  import CollectionUtil._
+//  import CollectionUtil._
   import PlannerHelpers._
 
   def plan(query: Fix[Sql]): Either[FileSystemError, Crystallized[WorkflowF]] =
@@ -97,10 +97,10 @@ class PlannerSpec extends
 
   "plan from query string" should {
 
-    "filter with both index and key projections" in {
+/*    "filter with both index and key projections" in {
       plan(sqlE"""select count(parents[0].sha) as count from slamengine_commits where parents[0].sha = "56d1caf5d082d1a6840090986e277d36d03f1859" """) must
         beRight.which(cwf => notBrokenWithOps(cwf.op, IList(ReadOp, MatchOp, ProjectOp, MatchOp, GroupOp, ProjectOp)))
-    }
+    }*/
 
     // TODO qz-3686
     /*trackPending(
@@ -109,7 +109,7 @@ class PlannerSpec extends
       IList(ReadOp, GroupOp, MatchOp, ProjectOp)
     )*/
 
-    "select partially-applied substring" in {
+    /*"select partially-applied substring" in {
       plan3_2(sqlE"""select substring("abcdefghijklmnop", 5, trunc(pop / 10000)) from extraSmallZips""") must
         beRight.which(cwf => notBrokenWithOps(cwf.op, IList(ReadOp, ProjectOp)))
     }
@@ -295,14 +295,14 @@ class PlannerSpec extends
     "plan distinct of expression as expression" in {
       plan(sqlE"select count(distinct substring(city, 0, 1)) from zips") must
         beRight.which(cwf => notBrokenWithOps(cwf.op, IList(ReadOp, GroupOp, GroupOp, ProjectOp)))
-    }
+    }*/
 
     "plan distinct with unrelated order by" in {
       plan(sqlE"select distinct city from zips order by pop desc") must
         beRight.which(cwf => notBrokenWithOps(cwf.op, IList(ReadOp, ProjectOp, SortOp, GroupOp, SortOp, ProjectOp)))
     }
 
-    trackPending(
+    /*trackPending(
       "distinct with sum and group",
       plan(sqlE"SELECT DISTINCT SUM(pop) AS totalPop, city, state FROM zips GROUP BY city"),
       // should not use map-reduce
@@ -443,6 +443,6 @@ class PlannerSpec extends
         appropriateColumns(wf, q)
         rootPushes(wf) must_== Nil
       }
-    }
+    }*/
   }
 }

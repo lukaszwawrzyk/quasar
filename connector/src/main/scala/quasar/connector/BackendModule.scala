@@ -161,7 +161,7 @@ trait BackendModule {
 
     for {
       qs <- MonadFsErr[M].unattempt(
-        LPtoQS[T].apply[X](lp).leftMap(qscriptPlanningFailed(_)).run.eval(0))
+        LPtoQS[T].apply[M](lp).leftMap(qscriptPlanningFailed(_)).run.eval(0))
       _ <- logPhase[M]{
         import quasar.fp.copkTraverse
         PhaseResult.tree("QScript (Educated)", qs)

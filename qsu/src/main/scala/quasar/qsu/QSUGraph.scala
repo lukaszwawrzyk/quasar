@@ -300,23 +300,41 @@ object QSUGraph extends QSUGraphInstances {
     QSUGraph[T](sym, verts + (sym -> pf))
   }
 
+  @SuppressWarnings(Array("org.wartremover.warts.Equals"))
   def withName[T[_[_]], F[_]: Monad: NameGenerator](
       prefix: String)(
       node: QScriptUniform[T, Symbol])(
       implicit MS: MonadState_[F, RevIdx[T]]): F[QSUGraph[T]] = {
-
+    Kurde.print("Entered withName for ", node)
     for {
       reverse <- MS.get
-
-      back <- reverse.get(node) match {
+      a = {
+        Kurde.register2()
+        Kurde.print("~>  ", reverse)
+        Kurde.print2("Map is ", reverse)
+        Kurde.print2("Key is ", node)
+        Kurde.print2(reverse.keys.find(_ == node))
+        Kurde.print2(reverse.get(node))
+        Kurde.print2(reverse.getClass)
+        Kurde.print2(reverse.collectFirst {case (`node`, x) => x })
+      }
+      back <- reverse.collectFirst {case (`node`, x) => x } match {
         case Some(sym) =>
-          QSUGraph[T](root = sym, SMap(sym -> node)).point[F]
+          {
+            val z = QSUGraph[T](root = sym, SMap(sym -> node))
+            Kurde.print("<~ SOM", z)
+            z
+          }.point[F]
 
         case None =>
           for {
             sym <- freshSymbol[F](prefix)
             _ <- MS.put(reverse + (node -> sym))
-          } yield QSUGraph[T](root = sym, SMap(sym -> node))
+          } yield {
+            val z = QSUGraph[T](root = sym, SMap(sym -> node))
+            Kurde.print("<~ NON", z)
+            z
+          }
       }
     } yield back
   }
